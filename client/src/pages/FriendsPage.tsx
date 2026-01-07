@@ -116,15 +116,15 @@ export default function FriendsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <h1 className="text-2xl font-bold font-serif text-gray-800">Friends</h1>
+      <h1 className="text-2xl font-bold font-serif text-light">Friends</h1>
 
       {/* Success Message */}
       {successMessage && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center justify-between">
+        <div className="bg-success/20 border border-success/30 text-success px-4 py-3 rounded-lg flex items-center justify-between">
           <span>{successMessage}</span>
           <button
             onClick={() => setSuccessMessage(null)}
-            className="text-green-500 hover:text-green-700"
+            className="text-success hover:text-success/80"
           >
             <X className="w-4 h-4" />
           </button>
@@ -132,24 +132,24 @@ export default function FriendsPage() {
       )}
 
       {/* Search for new friends */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">Add Friends</h2>
+      <div className="bg-card rounded-xl p-4">
+        <h2 className="text-lg font-semibold text-light mb-3">Add Friends</h2>
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-light/40" />
             <input
               type="text"
               placeholder="Search by username or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight/50"
+              className="w-full pl-10 pr-4 py-2 bg-dark border border-light/20 rounded-lg text-light placeholder-light/40 focus:outline-none focus:ring-2 focus:ring-accent/50"
             />
           </div>
           <button
             onClick={handleSearch}
             disabled={isSearching || !searchQuery.trim()}
-            className="bg-highlight text-white px-4 py-2 rounded-lg hover:bg-highlight/90 transition-colors disabled:opacity-50"
+            className="bg-accent text-dark px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50"
           >
             {isSearching ? 'Searching...' : 'Search'}
           </button>
@@ -161,23 +161,23 @@ export default function FriendsPage() {
             {searchResults.map((result) => (
               <div
                 key={result.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                className="flex items-center justify-between p-3 bg-dark rounded-lg"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-medium">
+                  <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
                     {result.username[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800">{result.username}</p>
+                    <p className="font-medium text-light">{result.username}</p>
                     {result.email && (
-                      <p className="text-sm text-gray-500">{result.email}</p>
+                      <p className="text-sm text-light/50">{result.email}</p>
                     )}
                   </div>
                 </div>
                 <button
                   onClick={() => sendRequestMutation.mutate({ userId: result.id, username: result.username })}
                   disabled={sendRequestMutation.isPending}
-                  className="flex items-center gap-1 bg-highlight text-white px-3 py-1.5 rounded-lg text-sm hover:bg-highlight/90 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1 bg-accent text-dark px-3 py-1.5 rounded-lg text-sm hover:bg-accent/90 transition-colors disabled:opacity-50"
                 >
                   <UserPlus className="w-4 h-4" />
                   Send Request
@@ -190,8 +190,8 @@ export default function FriendsPage() {
 
       {/* Pending Requests */}
       {pendingRequests.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">
+        <div className="bg-card rounded-xl p-4">
+          <h2 className="text-lg font-semibold text-light mb-3">
             Friend Requests ({pendingRequests.length})
           </h2>
           <div className="space-y-2">
@@ -200,13 +200,13 @@ export default function FriendsPage() {
               return (
                 <div
                   key={request.id}
-                  className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-100 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-warning/10 border border-warning/20 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-medium">
+                    <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
                       {requester?.username?.[0]?.toUpperCase() || '?'}
                     </div>
-                    <p className="font-medium text-gray-800">
+                    <p className="font-medium text-light">
                       {requester?.username || 'Unknown'}
                     </p>
                   </div>
@@ -235,8 +235,8 @@ export default function FriendsPage() {
 
       {/* Sent Requests */}
       {sentRequests.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">
+        <div className="bg-card rounded-xl p-4">
+          <h2 className="text-lg font-semibold text-light mb-3">
             Sent Requests ({sentRequests.length})
           </h2>
           <div className="space-y-2">
@@ -245,17 +245,17 @@ export default function FriendsPage() {
               return (
                 <div
                   key={request.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-dark rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-medium">
+                    <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
                       {addressee?.username?.[0]?.toUpperCase() || '?'}
                     </div>
-                    <p className="font-medium text-gray-800">
+                    <p className="font-medium text-light">
                       {addressee?.username || 'Unknown'}
                     </p>
                   </div>
-                  <span className="text-sm text-gray-500">Pending</span>
+                  <span className="text-sm text-light/50">Pending</span>
                 </div>
               )
             })}
@@ -264,13 +264,13 @@ export default function FriendsPage() {
       )}
 
       {/* Friends List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">
+      <div className="bg-card rounded-xl p-4">
+        <h2 className="text-lg font-semibold text-light mb-3">
           My Friends ({acceptedFriends.length})
         </h2>
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-highlight"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
           </div>
         ) : acceptedFriends.length > 0 ? (
           <div className="space-y-2">
@@ -281,17 +281,17 @@ export default function FriendsPage() {
                 <div
                   key={friendship.id}
                   onClick={() => friend && navigate(`/profile/${friend.id}`)}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-3 p-3 bg-dark rounded-lg cursor-pointer hover:bg-dark/70 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-medium">
+                  <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
                     {friend?.username?.[0]?.toUpperCase() || '?'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-800">
+                    <p className="font-medium text-light">
                       {friend?.username || 'Unknown'}
                     </p>
                     {activeCount > 0 && (
-                      <p className="text-sm text-highlight">
+                      <p className="text-sm text-accent">
                         {activeCount} active IOU{activeCount !== 1 ? 's' : ''}
                       </p>
                     )}
@@ -301,7 +301,7 @@ export default function FriendsPage() {
                       e.stopPropagation()
                       if (friend) setSelectedFriend(friend)
                     }}
-                    className="flex items-center gap-1 bg-highlight text-white px-3 py-1.5 rounded-lg text-sm hover:bg-highlight/90 transition-colors"
+                    className="flex items-center gap-1 bg-accent text-dark px-3 py-1.5 rounded-lg text-sm hover:bg-accent/90 transition-colors"
                   >
                     <FileText className="w-4 h-4" />
                     New IOU
@@ -312,9 +312,9 @@ export default function FriendsPage() {
           </div>
         ) : (
           <div className="text-center py-8">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No friends yet</p>
-            <p className="text-sm text-gray-400">
+            <Users className="w-12 h-12 text-light/30 mx-auto mb-3" />
+            <p className="text-light/70">No friends yet</p>
+            <p className="text-sm text-light/40">
               Search for friends above to get started
             </p>
           </div>

@@ -9,8 +9,8 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-highlight"></div>
+      <div className="min-h-screen flex items-center justify-center bg-dark">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
       </div>
     )
   }
@@ -33,27 +33,27 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-dark p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+        <div className="bg-card rounded-xl shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-primary to-secondary px-8 py-12 text-center">
-            <h1 className="text-4xl font-bold text-white font-serif mb-2">
+          <div className="bg-dark px-8 py-12 text-center">
+            <h1 className="text-4xl font-bold text-light font-serif mb-2">
               Anything Minutes
             </h1>
-            <p className="text-white/80 text-sm">
+            <p className="text-light/60 text-sm">
               Track bets and IOUs with friends
             </p>
           </div>
 
           {/* Content */}
           <div className="p-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6 text-center">
+            <h2 className="text-xl font-semibold text-light mb-6 text-center">
               Welcome Back
             </h2>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+              <div className="mb-4 p-3 bg-danger/20 border border-danger/30 text-danger rounded-lg text-sm">
                 {error}
               </div>
             )}
@@ -61,10 +61,10 @@ export default function LoginPage() {
             <button
               onClick={handleGoogleSignIn}
               disabled={isSigningIn}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-3 bg-light text-dark rounded-lg px-4 py-3 font-medium hover:bg-light/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSigningIn ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-dark"></div>
               ) : (
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -88,7 +88,7 @@ export default function LoginPage() {
               Continue with Google
             </button>
 
-            <p className="mt-6 text-center text-xs text-gray-500">
+            <p className="mt-6 text-center text-xs text-light/50">
               By signing in, you agree to our Terms of Service and Privacy Policy
             </p>
           </div>

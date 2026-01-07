@@ -11,11 +11,11 @@ const navItems = [
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
+    <div className="min-h-screen bg-dark pb-16 md:pb-0">
       {/* Desktop Header */}
-      <header className="hidden md:block bg-gradient-to-r from-primary to-secondary text-white shadow-lg">
+      <header className="hidden md:block bg-card shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold font-serif">Anything Minutes</h1>
+          <h1 className="text-2xl font-bold font-serif text-light">Anything Minutes</h1>
           <nav className="flex gap-6">
             {navItems.map(({ to, label }) => (
               <NavLink
@@ -23,7 +23,7 @@ export default function Layout() {
                 to={to}
                 className={({ isActive }) =>
                   `text-sm font-medium transition-colors ${
-                    isActive ? 'text-highlight' : 'text-white/80 hover:text-white'
+                    isActive ? 'text-accent' : 'text-light/70 hover:text-light'
                   }`
                 }
               >
@@ -40,7 +40,7 @@ export default function Layout() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-dark shadow-lg">
         <div className="flex justify-around items-center h-16">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
@@ -48,7 +48,7 @@ export default function Layout() {
               to={to}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-                  isActive ? 'text-highlight' : 'text-gray-500'
+                  isActive ? 'text-accent' : 'text-light/50'
                 }`
               }
             >

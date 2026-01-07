@@ -35,18 +35,18 @@ export default function IOUCard({ iou }: IOUCardProps) {
   })
 
   const getStatusColor = () => {
-    if (isOverdue) return 'border-l-danger bg-red-50'
+    if (isOverdue) return 'border-l-danger bg-danger/10'
     switch (iou.status) {
       case 'pending':
-        return 'border-l-warning bg-yellow-50'
+        return 'border-l-warning bg-warning/10'
       case 'payment_pending':
-        return 'border-l-accent bg-blue-50'
+        return 'border-l-accent bg-accent/10'
       case 'paid':
-        return 'border-l-success bg-green-50'
+        return 'border-l-success bg-success/10'
       case 'cancelled':
-        return 'border-l-gray-400 bg-gray-50'
+        return 'border-l-light/30 bg-light/5'
       default:
-        return 'border-l-highlight bg-white'
+        return 'border-l-accent bg-card'
     }
   }
 
@@ -79,13 +79,13 @@ export default function IOUCard({ iou }: IOUCardProps) {
         )
       case 'cancelled':
         return (
-          <span className="px-2 py-1 text-xs font-medium bg-gray-200 text-gray-600 rounded-full">
+          <span className="px-2 py-1 text-xs font-medium bg-light/10 text-light/50 rounded-full">
             Cancelled
           </span>
         )
       default:
         return (
-          <span className="px-2 py-1 text-xs font-medium bg-highlight/10 text-highlight rounded-full">
+          <span className="px-2 py-1 text-xs font-medium bg-accent/20 text-accent rounded-full">
             Active
           </span>
         )
@@ -103,15 +103,15 @@ export default function IOUCard({ iou }: IOUCardProps) {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-sm font-medium">
+              <div className="w-8 h-8 rounded-full bg-accent/30 flex items-center justify-center text-accent text-sm font-medium">
                 {otherUser?.username?.[0]?.toUpperCase() || '?'}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-800">
+                <p className="text-sm font-medium text-light">
                   {isDebtor ? 'You owe' : 'Owes you'}{' '}
-                  <span className="text-highlight">{otherUser?.username || 'Unknown'}</span>
+                  <span className="text-accent">{otherUser?.username || 'Unknown'}</span>
                 </p>
-                <p className="text-base font-semibold text-gray-900">{iou.description}</p>
+                <p className="text-base font-semibold text-light">{iou.description}</p>
               </div>
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function IOUCard({ iou }: IOUCardProps) {
         </div>
 
         {iou.due_date && (
-          <div className={`flex items-center gap-1 mt-2 text-xs ${isOverdue ? 'text-danger' : 'text-gray-500'}`}>
+          <div className={`flex items-center gap-1 mt-2 text-xs ${isOverdue ? 'text-danger' : 'text-light/50'}`}>
             <Clock className="w-3 h-3" />
             {isOverdue ? (
               <span>Overdue by {formatDistanceToNow(new Date(iou.due_date))}</span>
@@ -131,14 +131,14 @@ export default function IOUCard({ iou }: IOUCardProps) {
       </div>
 
       {expanded && (
-        <div className="px-4 pb-4 border-t border-gray-100 pt-3">
-          <div className="text-sm text-gray-600 space-y-2 mb-4">
+        <div className="px-4 pb-4 border-t border-light/10 pt-3">
+          <div className="text-sm text-light/70 space-y-2 mb-4">
             {iou.notes && <p>{iou.notes}</p>}
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-light/40">
               Created {format(new Date(iou.created_at), 'MMM d, yyyy')}
             </p>
             {iou.due_date && (
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-light/40">
                 Due {format(new Date(iou.due_date), 'MMM d, yyyy h:mm a')}
               </p>
             )}

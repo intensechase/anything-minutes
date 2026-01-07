@@ -7,13 +7,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#1a1a2e',
-        secondary: '#16213e',
-        accent: '#0f3460',
-        highlight: '#e94560',
-        success: '#2ecc71',
-        warning: '#f39c12',
-        danger: '#e74c3c',
+        // New dark theme palette
+        dark: '#222831',      // Main background
+        card: '#393e46',      // Cards, secondary backgrounds
+        accent: '#00adb5',    // Teal - primary accent
+        light: '#eeeeee',     // Off-white text
+        // Keep semantic colors for now (may adjust later)
+        primary: '#222831',
+        secondary: '#393e46',
+        highlight: '#00adb5',
+        success: '#10b981',
+        warning: '#f59e0b',
+        danger: '#ef4444',
       },
     },
   },
