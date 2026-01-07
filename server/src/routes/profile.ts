@@ -88,7 +88,41 @@ router.put('/settings', async (req: AuthenticatedRequest, res: Response): Promis
     }
 
     if (username) {
-      updates.username = username
+      // Validate username format
+      const trimmedUsername = username.trim().toLowerCase()
+      if (trimmedUsername.length < 3 || trimmedUsername.length > 20) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Username must be 3-20 characters' },
+        })
+        return
+      }
+      if (!/^[a-z0-9_]+$/.test(trimmedUsername)) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Username can only contain letters, numbers, and underscores' },
+        })
+        return
+      }
+
+      // Check if username is already taken
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', trimmedUsername)
+        .neq('id', userId)
+        .single()
+
+      if (existingUser) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'USERNAME_TAKEN', message: 'This alias is already taken' },
+        })
+        return
+      }
+
+      updates.username = trimmedUsername
+      updates.setup_complete = true
     }
 
     if (Object.keys(updates).length === 0) {

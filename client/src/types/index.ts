@@ -6,6 +6,7 @@ export interface User {
   phone?: string
   profile_pic_url?: string
   street_cred_visibility: 'private' | 'friends_only' | 'public'
+  setup_complete: boolean
   created_at: string
 }
 

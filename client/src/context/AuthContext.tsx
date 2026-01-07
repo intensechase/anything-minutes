@@ -16,6 +16,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   getIdToken: () => Promise<string | null>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -73,6 +74,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null
   }
 
+  const refreshUser = async () => {
+    if (firebaseUser) {
+      try {
+        const response = await api.getProfile()
+        if (response.success && response.data) {
+          setUser(response.data)
+        }
+      } catch (error) {
+        console.error('Failed to refresh user:', error)
+      }
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -82,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithGoogle,
         signOut,
         getIdToken,
+        refreshUser,
       }}
     >
       {children}

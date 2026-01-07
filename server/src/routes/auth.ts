@@ -35,41 +35,23 @@ router.post('/login', async (req: AuthenticatedRequest, res: Response): Promise<
       return
     }
 
-    // Create new user
-    const username = email?.split('@')[0] || `user_${uid.slice(0, 8)}`
+    // Create new user with temporary username
+    const tempUsername = `user_${uid.slice(0, 8)}_${Date.now().toString(36)}`
 
     const { data: newUser, error } = await supabase
       .from('users')
       .insert({
         firebase_uid: uid,
-        username: username,
+        username: tempUsername,
         email: email || null,
         profile_pic_url: picture || null,
         street_cred_visibility: 'friends_only',
+        setup_complete: false,
       })
       .select()
       .single()
 
     if (error) {
-      // Handle unique constraint violation for username
-      if (error.code === '23505') {
-        const uniqueUsername = `${username}_${Date.now().toString(36)}`
-        const { data: retryUser, error: retryError } = await supabase
-          .from('users')
-          .insert({
-            firebase_uid: uid,
-            username: uniqueUsername,
-            email: email || null,
-            profile_pic_url: picture || null,
-            street_cred_visibility: 'friends_only',
-          })
-          .select()
-          .single()
-
-        if (retryError) throw retryError
-        res.json({ success: true, data: retryUser })
-        return
-      }
       throw error
     }
 
