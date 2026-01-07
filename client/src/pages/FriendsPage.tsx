@@ -11,6 +11,7 @@ export default function FriendsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<User[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const { data: friendsData, isLoading } = useQuery({
     queryKey: ['friends'],
@@ -34,11 +35,15 @@ export default function FriendsPage() {
   )
 
   const sendRequestMutation = useMutation({
-    mutationFn: (userId: string) => api.sendFriendRequest(userId),
-    onSuccess: () => {
+    mutationFn: ({ userId, username }: { userId: string; username: string }) =>
+      api.sendFriendRequest(userId),
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['friends'] })
       setSearchResults([])
       setSearchQuery('')
+      setSuccessMessage(`Friend request sent to ${variables.username}!`)
+      // Auto-hide message after 4 seconds
+      setTimeout(() => setSuccessMessage(null), 4000)
     },
   })
 
@@ -92,6 +97,19 @@ export default function FriendsPage() {
       {/* Header */}
       <h1 className="text-2xl font-bold font-serif text-gray-800">Friends</h1>
 
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{successMessage}</span>
+          <button
+            onClick={() => setSuccessMessage(null)}
+            className="text-green-500 hover:text-green-700"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Search for new friends */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <h2 className="text-lg font-semibold text-gray-800 mb-3">Add Friends</h2>
@@ -136,12 +154,12 @@ export default function FriendsPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => sendRequestMutation.mutate(result.id)}
+                  onClick={() => sendRequestMutation.mutate({ userId: result.id, username: result.username })}
                   disabled={sendRequestMutation.isPending}
                   className="flex items-center gap-1 bg-highlight text-white px-3 py-1.5 rounded-lg text-sm hover:bg-highlight/90 transition-colors disabled:opacity-50"
                 >
                   <UserPlus className="w-4 h-4" />
-                  Add
+                  Send Request
                 </button>
               </div>
             ))}
