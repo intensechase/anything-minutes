@@ -51,6 +51,13 @@ export default function ProfilePage() {
     },
   })
 
+  const feedVisibleMutation = useMutation({
+    mutationFn: (feed_visible: boolean) => api.updateProfile({ feed_visible }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+    },
+  })
+
   // Friend action mutations
   const sendRequestMutation = useMutation({
     mutationFn: () => api.sendFriendRequest(userId!),
@@ -219,8 +226,10 @@ export default function ProfilePage() {
 
       {/* Settings Panel */}
       {showSettings && isOwnProfile && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Settings</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-6">
+          <h2 className="text-lg font-semibold text-gray-800">Settings</h2>
+
+          {/* Street Cred Visibility */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Street Cred Visibility
@@ -241,6 +250,32 @@ export default function ProfilePage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Feed Visibility Toggle */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Feed Visibility
+            </label>
+            <p className="text-xs text-gray-500 mb-3">
+              When enabled, you can see your friends' public activity and your public activity will appear in their feeds.
+            </p>
+            <button
+              onClick={() => feedVisibleMutation.mutate(!profile?.feed_visible)}
+              disabled={feedVisibleMutation.isPending}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                profile?.feed_visible ? 'bg-highlight' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  profile?.feed_visible ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className="ml-3 text-sm text-gray-600">
+              {profile?.feed_visible ? 'Enabled' : 'Disabled'}
+            </span>
           </div>
         </div>
       )}

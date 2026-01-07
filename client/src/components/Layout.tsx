@@ -1,8 +1,9 @@
 import { Outlet, NavLink } from 'react-router-dom'
-import { Home, Receipt, Users, User } from 'lucide-react'
+import { Home, Receipt, Users, User, Rss } from 'lucide-react'
 
 const navItems = [
   { to: '/', icon: Home, label: 'Home' },
+  { to: '/feed', icon: Rss, label: 'Feed' },
   { to: '/debts', icon: Receipt, label: 'Debts' },
   { to: '/friends', icon: Users, label: 'Friends' },
   { to: '/profile', icon: User, label: 'Profile' },

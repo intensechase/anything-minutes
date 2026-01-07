@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { auth } from './firebase'
-import { User, Friendship, IOU, StreetCred, ApiResponse } from '../types'
+import { User, Friendship, IOU, StreetCred, ApiResponse, FeedItem } from '../types'
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api',
@@ -146,6 +146,22 @@ export const api = {
 
   async cancelIOU(iouId: string): Promise<ApiResponse<void>> {
     const { data } = await apiClient.delete(`/ious/${iouId}`)
+    return data
+  },
+
+  // Feed
+  async getFeed(): Promise<ApiResponse<FeedItem[]>> {
+    const { data } = await apiClient.get('/feed')
+    return data
+  },
+
+  async addReaction(iouId: string, reactionType: 'up' | 'down'): Promise<ApiResponse<void>> {
+    const { data } = await apiClient.post(`/feed/${iouId}/react`, { reaction_type: reactionType })
+    return data
+  },
+
+  async removeReaction(iouId: string): Promise<ApiResponse<void>> {
+    const { data } = await apiClient.delete(`/feed/${iouId}/react`)
     return data
   },
 }

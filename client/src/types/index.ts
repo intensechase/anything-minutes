@@ -6,8 +6,14 @@ export interface User {
   phone?: string
   profile_pic_url?: string
   street_cred_visibility: 'private' | 'friends_only' | 'public'
+  feed_visible: boolean
   setup_complete: boolean
   created_at: string
+}
+
+export interface FeedItem extends IOU {
+  reactions: { up: number; down: number }
+  userReaction: 'up' | 'down' | null
 }
 
 export interface Friendship {

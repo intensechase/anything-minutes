@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
 import SetupPage from './pages/SetupPage'
 import HomePage from './pages/HomePage'
+import FeedPage from './pages/FeedPage'
 import DebtsPage from './pages/DebtsPage'
 import FriendsPage from './pages/FriendsPage'
 import ProfilePage from './pages/ProfilePage'
@@ -75,6 +76,7 @@ export default function App() {
         }
       >
         <Route index element={<HomePage />} />
+        <Route path="feed" element={<FeedPage />} />
         <Route path="debts" element={<DebtsPage />} />
         <Route path="friends" element={<FriendsPage />} />
         <Route path="profile" element={<ProfilePage />} />

@@ -71,7 +71,7 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
 // Update profile settings
 router.put('/settings', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
-  const { street_cred_visibility, username } = req.body
+  const { street_cred_visibility, username, feed_visible } = req.body
 
   try {
     const updates: Record<string, unknown> = {}
@@ -85,6 +85,11 @@ router.put('/settings', async (req: AuthenticatedRequest, res: Response): Promis
         return
       }
       updates.street_cred_visibility = street_cred_visibility
+    }
+
+    // Handle feed visibility toggle
+    if (typeof feed_visible === 'boolean') {
+      updates.feed_visible = feed_visible
     }
 
     if (username) {
