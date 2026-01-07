@@ -35,8 +35,8 @@ export default function FriendsPage() {
   )
 
   const sendRequestMutation = useMutation({
-    mutationFn: ({ userId, username }: { userId: string; username: string }) =>
-      api.sendFriendRequest(userId),
+    mutationFn: (variables: { userId: string; username: string }) =>
+      api.sendFriendRequest(variables.userId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['friends'] })
       setSearchResults([])
