@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import IOUCard from '../components/IOUCard'
 import CreateIOUModal from '../components/CreateIOUModal'
 
-type TabType = 'all' | 'owed_by_me' | 'owed_to_me' | 'history'
+type TabType = 'all' | 'pending' | 'owed_by_me' | 'owed_to_me' | 'history'
 
 export default function DebtsPage() {
   const { user } = useAuth()
@@ -15,7 +15,7 @@ export default function DebtsPage() {
 
   // Get initial tab from URL parameter, default to 'all'
   const tabParam = searchParams.get('tab') as TabType | null
-  const initialTab = tabParam && ['all', 'owed_by_me', 'owed_to_me', 'history'].includes(tabParam)
+  const initialTab = tabParam && ['all', 'pending', 'owed_by_me', 'owed_to_me', 'history'].includes(tabParam)
     ? tabParam
     : 'all'
 
@@ -32,8 +32,12 @@ export default function DebtsPage() {
   const filteredIOUs = ious.filter((iou) => {
     const isDebtor = iou.debtor_id === user?.id
     const isCompleted = iou.status === 'paid' || iou.status === 'cancelled'
+    const isPending = iou.status === 'pending' || iou.status === 'payment_pending'
 
     switch (activeTab) {
+      case 'pending':
+        // Show IOUs waiting for acceptance or payment confirmation
+        return isPending
       case 'owed_by_me':
         return isDebtor && !isCompleted
       case 'owed_to_me':
@@ -41,12 +45,19 @@ export default function DebtsPage() {
       case 'history':
         return isCompleted
       default:
+        // All active = not completed
         return !isCompleted
     }
   })
 
+  // Count pending items for badge
+  const pendingCount = ious.filter(
+    (iou) => iou.status === 'pending' || iou.status === 'payment_pending'
+  ).length
+
   const tabs = [
     { id: 'all' as TabType, label: 'All Active' },
+    { id: 'pending' as TabType, label: 'Pending', count: pendingCount },
     { id: 'owed_by_me' as TabType, label: 'I Owe' },
     { id: 'owed_to_me' as TabType, label: 'Owed to Me' },
     { id: 'history' as TabType, label: 'History' },
@@ -72,13 +83,22 @@ export default function DebtsPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
               activeTab === tab.id
                 ? 'bg-highlight text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             {tab.label}
+            {tab.count !== undefined && tab.count > 0 && (
+              <span className={`px-1.5 py-0.5 text-xs rounded-full ${
+                activeTab === tab.id
+                  ? 'bg-white/20 text-white'
+                  : 'bg-warning text-white'
+              }`}>
+                {tab.count}
+              </span>
+            )}
           </button>
         ))}
       </div>

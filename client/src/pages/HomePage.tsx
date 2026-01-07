@@ -54,7 +54,7 @@ export default function HomePage() {
         </Link>
 
         <Link
-          to="/debts?tab=owed_to_me"
+          to="/debts?tab=pending"
           className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:border-warning/50 hover:shadow-md transition-all"
         >
           <div className="flex items-center gap-3">
