@@ -282,7 +282,7 @@ router.post('/:id/decline', async (req: AuthenticatedRequest, res: Response): Pr
   }
 })
 
-// Mark IOU as paid (by debtor)
+// Mark IOU as paid (by creditor - the person who was owed)
 router.post('/:id/mark-paid', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
   const { id } = req.params
@@ -290,9 +290,12 @@ router.post('/:id/mark-paid', async (req: AuthenticatedRequest, res: Response): 
   try {
     const { data, error } = await supabase
       .from('ious')
-      .update({ status: 'payment_pending' })
+      .update({
+        status: 'paid',
+        paid_at: new Date().toISOString(),
+      })
       .eq('id', id)
-      .eq('debtor_id', userId)
+      .eq('creditor_id', userId)  // Only creditor can mark as paid
       .eq('status', 'active')
       .select(`
         *,
@@ -320,84 +323,6 @@ router.post('/:id/mark-paid', async (req: AuthenticatedRequest, res: Response): 
   }
 })
 
-// Confirm payment (by creditor)
-router.post('/:id/confirm-paid', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const userId = req.user!.userId
-  const { id } = req.params
-
-  try {
-    const { data, error } = await supabase
-      .from('ious')
-      .update({
-        status: 'paid',
-        paid_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .eq('creditor_id', userId)
-      .eq('status', 'payment_pending')
-      .select(`
-        *,
-        debtor:users!ious_debtor_id_fkey(*),
-        creditor:users!ious_creditor_id_fkey(*)
-      `)
-      .single()
-
-    if (error) throw error
-    if (!data) {
-      res.status(404).json({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'IOU not found or not pending confirmation' },
-      })
-      return
-    }
-
-    res.json({ success: true, data })
-  } catch (error) {
-    console.error('Confirm paid error:', error)
-    res.status(500).json({
-      success: false,
-      error: { code: 'SERVER_ERROR', message: 'Failed to confirm payment' },
-    })
-  }
-})
-
-// Dispute payment (by creditor)
-router.post('/:id/dispute', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const userId = req.user!.userId
-  const { id } = req.params
-
-  try {
-    const { data, error } = await supabase
-      .from('ious')
-      .update({ status: 'active' })
-      .eq('id', id)
-      .eq('creditor_id', userId)
-      .eq('status', 'payment_pending')
-      .select(`
-        *,
-        debtor:users!ious_debtor_id_fkey(*),
-        creditor:users!ious_creditor_id_fkey(*)
-      `)
-      .single()
-
-    if (error) throw error
-    if (!data) {
-      res.status(404).json({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'IOU not found or not pending confirmation' },
-      })
-      return
-    }
-
-    res.json({ success: true, data })
-  } catch (error) {
-    console.error('Dispute payment error:', error)
-    res.status(500).json({
-      success: false,
-      error: { code: 'SERVER_ERROR', message: 'Failed to dispute payment' },
-    })
-  }
-})
 
 // Cancel IOU (only pending ones by creator)
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {

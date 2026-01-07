@@ -134,16 +134,6 @@ export const api = {
     return data
   },
 
-  async confirmPaid(iouId: string): Promise<ApiResponse<IOU>> {
-    const { data } = await apiClient.post(`/ious/${iouId}/confirm-paid`)
-    return data
-  },
-
-  async disputePayment(iouId: string): Promise<ApiResponse<IOU>> {
-    const { data } = await apiClient.post(`/ious/${iouId}/dispute`)
-    return data
-  },
-
   async cancelIOU(iouId: string): Promise<ApiResponse<void>> {
     const { data } = await apiClient.delete(`/ious/${iouId}`)
     return data

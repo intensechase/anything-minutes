@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Clock, Check, X, AlertCircle } from 'lucide-react'
+import { Clock, Check, X } from 'lucide-react'
 import { formatDistanceToNow, isPast, format } from 'date-fns'
 import { IOU } from '../types'
 import { api } from '../services/api'
@@ -31,16 +31,6 @@ export default function IOUCard({ iou }: IOUCardProps) {
 
   const markPaidMutation = useMutation({
     mutationFn: () => api.markPaid(iou.id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ious'] }),
-  })
-
-  const confirmPaidMutation = useMutation({
-    mutationFn: () => api.confirmPaid(iou.id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ious'] }),
-  })
-
-  const disputeMutation = useMutation({
-    mutationFn: () => api.disputePayment(iou.id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ious'] }),
   })
 
@@ -184,8 +174,8 @@ export default function IOUCard({ iou }: IOUCardProps) {
               </>
             )}
 
-            {/* Active IOU - debtor can mark as paid */}
-            {iou.status === 'active' && isDebtor && (
+            {/* Active IOU - creditor can mark as paid */}
+            {iou.status === 'active' && !isDebtor && (
               <button
                 onClick={(e) => {
                   e.stopPropagation()
@@ -197,34 +187,6 @@ export default function IOUCard({ iou }: IOUCardProps) {
                 <Check className="w-4 h-4" />
                 Mark as Paid
               </button>
-            )}
-
-            {/* Payment pending - creditor can confirm or dispute */}
-            {iou.status === 'payment_pending' && !isDebtor && (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    confirmPaidMutation.mutate()
-                  }}
-                  disabled={confirmPaidMutation.isPending}
-                  className="flex-1 flex items-center justify-center gap-1 bg-success text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-success/90 disabled:opacity-50"
-                >
-                  <Check className="w-4 h-4" />
-                  Confirm Paid
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    disputeMutation.mutate()
-                  }}
-                  disabled={disputeMutation.isPending}
-                  className="flex-1 flex items-center justify-center gap-1 bg-warning text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-warning/90 disabled:opacity-50"
-                >
-                  <AlertCircle className="w-4 h-4" />
-                  Not Yet
-                </button>
-              </>
             )}
           </div>
         </div>
