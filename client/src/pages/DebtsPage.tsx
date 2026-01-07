@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, Receipt } from 'lucide-react'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
@@ -10,7 +11,15 @@ type TabType = 'all' | 'owed_by_me' | 'owed_to_me' | 'history'
 
 export default function DebtsPage() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState<TabType>('all')
+  const [searchParams] = useSearchParams()
+
+  // Get initial tab from URL parameter, default to 'all'
+  const tabParam = searchParams.get('tab') as TabType | null
+  const initialTab = tabParam && ['all', 'owed_by_me', 'owed_to_me', 'history'].includes(tabParam)
+    ? tabParam
+    : 'all'
+
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab)
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   const { data: iousData, isLoading } = useQuery({
