@@ -36,9 +36,12 @@ export default function HomePage() {
         <p className="text-white/80">Here's your IOU summary</p>
       </div>
 
-      {/* Quick Stats */}
+      {/* Quick Stats - Clickable cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <Link
+          to="/debts"
+          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:border-highlight/50 hover:shadow-md transition-all"
+        >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-highlight/10 rounded-lg">
               <Receipt className="w-5 h-5 text-highlight" />
@@ -48,9 +51,12 @@ export default function HomePage() {
               <p className="text-xs text-gray-500">Active IOUs</p>
             </div>
           </div>
-        </div>
+        </Link>
 
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <Link
+          to="/debts"
+          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:border-warning/50 hover:shadow-md transition-all"
+        >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-warning/10 rounded-lg">
               <TrendingUp className="w-5 h-5 text-warning" />
@@ -60,9 +66,12 @@ export default function HomePage() {
               <p className="text-xs text-gray-500">Pending</p>
             </div>
           </div>
-        </div>
+        </Link>
 
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <Link
+          to="/friends"
+          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:border-success/50 hover:shadow-md transition-all"
+        >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-success/10 rounded-lg">
               <Users className="w-5 h-5 text-success" />
@@ -74,7 +83,7 @@ export default function HomePage() {
               <p className="text-xs text-gray-500">Friends</p>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Pending Actions */}
