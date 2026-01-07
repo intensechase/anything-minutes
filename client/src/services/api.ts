@@ -107,6 +107,18 @@ export const api = {
     return data
   },
 
+  // Create UOMe (creditor creates - "You owe me")
+  async createUOMe(uome: {
+    debtor_id: string
+    description: string
+    visibility: 'private' | 'public'
+    due_date?: string
+    notes?: string
+  }): Promise<ApiResponse<IOU>> {
+    const { data } = await apiClient.post('/ious/uome', uome)
+    return data
+  },
+
   async acceptIOU(iouId: string): Promise<ApiResponse<IOU>> {
     const { data } = await apiClient.post(`/ious/${iouId}/accept`)
     return data

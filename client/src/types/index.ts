@@ -25,6 +25,7 @@ export interface IOU {
   id: string
   debtor_id: string
   creditor_id: string
+  created_by?: string  // Who created the IOU (for accept/decline permissions)
   description: string
   status: 'pending' | 'active' | 'payment_pending' | 'paid' | 'cancelled'
   visibility: 'private' | 'public'

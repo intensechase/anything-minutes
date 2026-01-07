@@ -46,7 +46,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
   }
 })
 
-// Create IOU
+// Create IOU (debtor creates - "I owe you")
 router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
   const { creditor_id, description, visibility, due_date, notes } = req.body
@@ -88,6 +88,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
         due_date: due_date || null,
         notes: notes || null,
         status: 'pending',
+        created_by: userId,  // Track who created the IOU
       })
       .select(`
         *,
@@ -108,18 +109,50 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
   }
 })
 
-// Accept IOU
-router.post('/:id/accept', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+// Create UOMe (creditor creates - "You owe me")
+router.post('/uome', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
-  const { id } = req.params
+  const { debtor_id, description, visibility, due_date, notes } = req.body
+
+  if (!debtor_id || !description) {
+    res.status(400).json({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: 'debtor_id and description are required' },
+    })
+    return
+  }
 
   try {
+    // Verify friendship exists
+    const { data: friendship } = await supabase
+      .from('friendships')
+      .select('*')
+      .or(
+        `and(requester_id.eq.${userId},addressee_id.eq.${debtor_id}),and(requester_id.eq.${debtor_id},addressee_id.eq.${userId})`
+      )
+      .eq('status', 'accepted')
+      .single()
+
+    if (!friendship) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'NOT_FRIENDS', message: 'You can only create IOUs with friends' },
+      })
+      return
+    }
+
     const { data, error } = await supabase
       .from('ious')
-      .update({ status: 'active' })
-      .eq('id', id)
-      .eq('creditor_id', userId)
-      .eq('status', 'pending')
+      .insert({
+        debtor_id,
+        creditor_id: userId,  // Current user is the creditor
+        description,
+        visibility: visibility || 'private',
+        due_date: due_date || null,
+        notes: notes || null,
+        status: 'pending',
+        created_by: userId,  // Track who created the IOU
+      })
       .select(`
         *,
         debtor:users!ious_debtor_id_fkey(*),
@@ -128,13 +161,63 @@ router.post('/:id/accept', async (req: AuthenticatedRequest, res: Response): Pro
       .single()
 
     if (error) throw error
-    if (!data) {
+
+    res.json({ success: true, data })
+  } catch (error) {
+    console.error('Create UOMe error:', error)
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'Failed to create UOMe' },
+    })
+  }
+})
+
+// Accept IOU (non-creator accepts)
+router.post('/:id/accept', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const userId = req.user!.userId
+  const { id } = req.params
+
+  try {
+    // First, get the IOU to check who can accept it
+    const { data: iou } = await supabase
+      .from('ious')
+      .select('*')
+      .eq('id', id)
+      .eq('status', 'pending')
+      .single()
+
+    if (!iou) {
       res.status(404).json({
         success: false,
         error: { code: 'NOT_FOUND', message: 'IOU not found or already processed' },
       })
       return
     }
+
+    // User must be involved (debtor or creditor) but NOT the creator
+    const isInvolved = iou.debtor_id === userId || iou.creditor_id === userId
+    const isCreator = iou.created_by === userId
+
+    if (!isInvolved || isCreator) {
+      res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'You cannot accept this IOU' },
+      })
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('ious')
+      .update({ status: 'active' })
+      .eq('id', id)
+      .select(`
+        *,
+        debtor:users!ious_debtor_id_fkey(*),
+        creditor:users!ious_creditor_id_fkey(*)
+      `)
+      .single()
+
+    if (error) throw error
 
     res.json({ success: true, data })
   } catch (error) {
@@ -146,29 +229,48 @@ router.post('/:id/accept', async (req: AuthenticatedRequest, res: Response): Pro
   }
 })
 
-// Decline IOU
+// Decline IOU (non-creator declines)
 router.post('/:id/decline', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
   const { id } = req.params
 
   try {
-    const { data, error } = await supabase
+    // First, get the IOU to check who can decline it
+    const { data: iou } = await supabase
       .from('ious')
-      .update({ status: 'cancelled' })
+      .select('*')
       .eq('id', id)
-      .eq('creditor_id', userId)
       .eq('status', 'pending')
-      .select()
       .single()
 
-    if (error) throw error
-    if (!data) {
+    if (!iou) {
       res.status(404).json({
         success: false,
         error: { code: 'NOT_FOUND', message: 'IOU not found or already processed' },
       })
       return
     }
+
+    // User must be involved (debtor or creditor) but NOT the creator
+    const isInvolved = iou.debtor_id === userId || iou.creditor_id === userId
+    const isCreator = iou.created_by === userId
+
+    if (!isInvolved || isCreator) {
+      res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'You cannot decline this IOU' },
+      })
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('ious')
+      .update({ status: 'cancelled' })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
 
     res.json({ success: true, data })
   } catch (error) {

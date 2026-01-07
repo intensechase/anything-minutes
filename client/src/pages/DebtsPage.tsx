@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, Receipt } from 'lucide-react'
+import { Plus, Receipt, HandCoins } from 'lucide-react'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import IOUCard from '../components/IOUCard'
 import CreateIOUModal from '../components/CreateIOUModal'
+import CreateUOMeModal from '../components/CreateUOMeModal'
 
 type TabType = 'all' | 'pending' | 'owed_by_me' | 'owed_to_me' | 'history'
 
@@ -21,6 +22,7 @@ export default function DebtsPage() {
 
   const [activeTab, setActiveTab] = useState<TabType>(initialTab)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showCreateUOMeModal, setShowCreateUOMeModal] = useState(false)
 
   const { data: iousData, isLoading } = useQuery({
     queryKey: ['ious'],
@@ -68,13 +70,22 @@ export default function DebtsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold font-serif text-gray-800">Debts</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 bg-highlight text-white px-4 py-2 rounded-lg hover:bg-highlight/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New IOU
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 bg-highlight text-white px-4 py-2 rounded-lg hover:bg-highlight/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            New IOU
+          </button>
+          <button
+            onClick={() => setShowCreateUOMeModal(true)}
+            className="flex items-center gap-2 bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
+          >
+            <HandCoins className="w-4 h-4" />
+            New UOMe
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -131,6 +142,11 @@ export default function DebtsPage() {
       {/* Create IOU Modal */}
       {showCreateModal && (
         <CreateIOUModal onClose={() => setShowCreateModal(false)} />
+      )}
+
+      {/* Create UOMe Modal */}
+      {showCreateUOMeModal && (
+        <CreateUOMeModal onClose={() => setShowCreateUOMeModal(false)} />
       )}
     </div>
   )
