@@ -156,8 +156,8 @@ export default function IOUCard({ iou }: IOUCardProps) {
 
           {/* Actions based on status and role */}
           <div className="flex gap-2">
-            {/* Pending IOU - addressee can accept/decline */}
-            {iou.status === 'pending' && !isDebtor && (
+            {/* Pending IOU - non-creator can accept/decline */}
+            {iou.status === 'pending' && iou.created_by !== user?.id && (
               <>
                 <button
                   onClick={(e) => {
