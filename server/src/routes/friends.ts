@@ -8,6 +8,55 @@ const router = Router()
 // All routes require authentication
 router.use(authMiddleware)
 
+// Get friendship status with a specific user
+router.get('/status/:userId', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const currentUserId = req.user!.userId
+  const { userId } = req.params
+
+  try {
+    const { data, error } = await supabase
+      .from('friendships')
+      .select('*')
+      .or(
+        `and(requester_id.eq.${currentUserId},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${currentUserId})`
+      )
+      .single()
+
+    if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows
+
+    if (!data) {
+      res.json({ success: true, data: { status: 'none' } })
+      return
+    }
+
+    // Determine relationship from current user's perspective
+    const isSender = data.requester_id === currentUserId
+    let status: string
+
+    if (data.status === 'accepted') {
+      status = 'friends'
+    } else if (data.status === 'pending') {
+      status = isSender ? 'request_sent' : 'request_received'
+    } else {
+      status = 'none'
+    }
+
+    res.json({
+      success: true,
+      data: {
+        status,
+        friendship_id: data.id,
+      },
+    })
+  } catch (error) {
+    console.error('Get friendship status error:', error)
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'Failed to get friendship status' },
+    })
+  }
+})
+
 // Get all friendships (accepted)
 router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId

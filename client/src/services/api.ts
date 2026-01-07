@@ -49,6 +49,11 @@ export const api = {
   },
 
   // Friends
+  async getFriendshipStatus(userId: string): Promise<ApiResponse<{ status: string; friendship_id?: string }>> {
+    const { data } = await apiClient.get(`/friends/status/${userId}`)
+    return data
+  },
+
   async getFriends(): Promise<ApiResponse<Friendship[]>> {
     const { data } = await apiClient.get('/friends')
     return data

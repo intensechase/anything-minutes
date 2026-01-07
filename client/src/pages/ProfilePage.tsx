@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LogOut, Settings, Award, Receipt } from 'lucide-react'
+import { LogOut, Settings, Award, Receipt, UserPlus, UserMinus, Clock, Check, X, FileText } from 'lucide-react'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { User } from '../types'
 import IOUCard from '../components/IOUCard'
+import CreateIOUModal from '../components/CreateIOUModal'
 
 export default function ProfilePage() {
   const { userId } = useParams()
   const { user, signOut } = useAuth()
   const queryClient = useQueryClient()
   const [showSettings, setShowSettings] = useState(false)
+  const [showCreateIOU, setShowCreateIOU] = useState(false)
 
   const isOwnProfile = !userId || userId === user?.id
 
@@ -33,6 +36,13 @@ export default function ProfilePage() {
     enabled: isOwnProfile,
   })
 
+  // Fetch friendship status when viewing another user's profile
+  const { data: friendshipData } = useQuery({
+    queryKey: ['friendship-status', userId],
+    queryFn: () => api.getFriendshipStatus(userId!),
+    enabled: !isOwnProfile && !!userId,
+  })
+
   const updateMutation = useMutation({
     mutationFn: (visibility: 'private' | 'friends_only' | 'public') =>
       api.updateProfile({ street_cred_visibility: visibility }),
@@ -41,9 +51,49 @@ export default function ProfilePage() {
     },
   })
 
+  // Friend action mutations
+  const sendRequestMutation = useMutation({
+    mutationFn: () => api.sendFriendRequest(userId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friendship-status', userId] })
+    },
+  })
+
+  const cancelRequestMutation = useMutation({
+    mutationFn: (friendshipId: string) => api.removeFriend(friendshipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friendship-status', userId] })
+    },
+  })
+
+  const acceptRequestMutation = useMutation({
+    mutationFn: (friendshipId: string) => api.acceptFriendRequest(friendshipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friendship-status', userId] })
+      queryClient.invalidateQueries({ queryKey: ['friends'] })
+    },
+  })
+
+  const declineRequestMutation = useMutation({
+    mutationFn: (friendshipId: string) => api.declineFriendRequest(friendshipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friendship-status', userId] })
+    },
+  })
+
+  const removeFriendMutation = useMutation({
+    mutationFn: (friendshipId: string) => api.removeFriend(friendshipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friendship-status', userId] })
+      queryClient.invalidateQueries({ queryKey: ['friends'] })
+    },
+  })
+
   const profile = profileData?.data
   const streetCred = streetCredData?.data
   const ious = iousData?.data || []
+  const friendshipStatus = friendshipData?.data?.status || 'none'
+  const friendshipId = friendshipData?.data?.friendship_id
 
   const completedIOUs = ious.filter(
     (iou) => iou.status === 'paid' || iou.status === 'cancelled'
@@ -82,7 +132,7 @@ export default function ProfilePage() {
               </p>
             </div>
           </div>
-          {isOwnProfile && (
+          {isOwnProfile ? (
             <div className="flex gap-2">
               <button
                 onClick={() => setShowSettings(!showSettings)}
@@ -96,6 +146,72 @@ export default function ProfilePage() {
               >
                 <LogOut className="w-5 h-5" />
               </button>
+            </div>
+          ) : (
+            /* Friend action buttons for viewing other profiles */
+            <div className="flex flex-col gap-2">
+              {friendshipStatus === 'none' && (
+                <button
+                  onClick={() => sendRequestMutation.mutate()}
+                  disabled={sendRequestMutation.isPending}
+                  className="flex items-center gap-2 px-4 py-2 bg-white text-primary rounded-lg font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  {sendRequestMutation.isPending ? 'Sending...' : 'Add Friend'}
+                </button>
+              )}
+
+              {friendshipStatus === 'request_sent' && (
+                <button
+                  onClick={() => friendshipId && cancelRequestMutation.mutate(friendshipId)}
+                  disabled={cancelRequestMutation.isPending}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors disabled:opacity-50"
+                >
+                  <Clock className="w-4 h-4" />
+                  {cancelRequestMutation.isPending ? 'Canceling...' : 'Request Sent (Cancel)'}
+                </button>
+              )}
+
+              {friendshipStatus === 'request_received' && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => friendshipId && acceptRequestMutation.mutate(friendshipId)}
+                    disabled={acceptRequestMutation.isPending}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors disabled:opacity-50"
+                  >
+                    <Check className="w-4 h-4" />
+                    {acceptRequestMutation.isPending ? '...' : 'Accept'}
+                  </button>
+                  <button
+                    onClick={() => friendshipId && declineRequestMutation.mutate(friendshipId)}
+                    disabled={declineRequestMutation.isPending}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors disabled:opacity-50"
+                  >
+                    <X className="w-4 h-4" />
+                    {declineRequestMutation.isPending ? '...' : 'Decline'}
+                  </button>
+                </div>
+              )}
+
+              {friendshipStatus === 'friends' && (
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => setShowCreateIOU(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white text-primary rounded-lg font-medium hover:bg-white/90 transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Create IOU
+                  </button>
+                  <button
+                    onClick={() => friendshipId && removeFriendMutation.mutate(friendshipId)}
+                    disabled={removeFriendMutation.isPending}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-lg font-medium hover:bg-red-500/80 transition-colors disabled:opacity-50"
+                  >
+                    <UserMinus className="w-4 h-4" />
+                    {removeFriendMutation.isPending ? 'Removing...' : 'Remove Friend'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -208,6 +324,14 @@ export default function ProfilePage() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Create IOU Modal - opens from profile with friend pre-selected */}
+      {showCreateIOU && profile && (
+        <CreateIOUModal
+          onClose={() => setShowCreateIOU(false)}
+          preselectedFriend={profile as User}
+        />
       )}
     </div>
   )
