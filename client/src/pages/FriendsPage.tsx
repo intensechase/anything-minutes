@@ -1,17 +1,21 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, UserPlus, Check, X, Users } from 'lucide-react'
+import { Search, UserPlus, Check, X, Users, FileText } from 'lucide-react'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { User, Friendship } from '../types'
+import CreateIOUModal from '../components/CreateIOUModal'
 
 export default function FriendsPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<User[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [selectedFriend, setSelectedFriend] = useState<User | null>(null)
 
   const { data: friendsData, isLoading } = useQuery({
     queryKey: ['friends'],
@@ -22,6 +26,23 @@ export default function FriendsPage() {
     queryKey: ['friend-requests'],
     queryFn: () => api.getFriendRequests(),
   })
+
+  // Fetch IOUs to show counts per friend
+  const { data: iousData } = useQuery({
+    queryKey: ['ious'],
+    queryFn: () => api.getIOUs(),
+  })
+
+  const ious = iousData?.data || []
+
+  // Helper to count active IOUs with a specific friend
+  const getActiveIOUCount = (friendId: string): number => {
+    return ious.filter(
+      (iou) =>
+        (iou.status === 'active' || iou.status === 'pending' || iou.status === 'payment_pending') &&
+        (iou.debtor_id === friendId || iou.creditor_id === friendId)
+    ).length
+  }
 
   const friendships = friendsData?.data || []
   const requests = requestsData?.data || []
@@ -255,22 +276,36 @@ export default function FriendsPage() {
           <div className="space-y-2">
             {acceptedFriends.map((friendship) => {
               const friend = getFriendFromFriendship(friendship)
+              const activeCount = friend ? getActiveIOUCount(friend.id) : 0
               return (
                 <div
                   key={friendship.id}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                  onClick={() => friend && navigate(`/profile/${friend.id}`)}
+                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-medium">
                     {friend?.username?.[0]?.toUpperCase() || '?'}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-800">
                       {friend?.username || 'Unknown'}
                     </p>
-                    {friend?.email && (
-                      <p className="text-sm text-gray-500">{friend.email}</p>
+                    {activeCount > 0 && (
+                      <p className="text-sm text-highlight">
+                        {activeCount} active IOU{activeCount !== 1 ? 's' : ''}
+                      </p>
                     )}
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (friend) setSelectedFriend(friend)
+                    }}
+                    className="flex items-center gap-1 bg-highlight text-white px-3 py-1.5 rounded-lg text-sm hover:bg-highlight/90 transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    New IOU
+                  </button>
                 </div>
               )
             })}
@@ -285,6 +320,14 @@ export default function FriendsPage() {
           </div>
         )}
       </div>
+
+      {/* Create IOU Modal */}
+      {selectedFriend && (
+        <CreateIOUModal
+          onClose={() => setSelectedFriend(null)}
+          preselectedFriend={selectedFriend}
+        />
+      )}
     </div>
   )
 }

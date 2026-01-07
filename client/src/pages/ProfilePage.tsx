@@ -33,7 +33,6 @@ export default function ProfilePage() {
   const { data: iousData } = useQuery({
     queryKey: ['ious'],
     queryFn: () => api.getIOUs(),
-    enabled: isOwnProfile,
   })
 
   // Fetch friendship status when viewing another user's profile
@@ -105,6 +104,25 @@ export default function ProfilePage() {
   const completedIOUs = ious.filter(
     (iou) => iou.status === 'paid' || iou.status === 'cancelled'
   )
+
+  // IOUs with this specific friend (when viewing another profile)
+  const iousWithFriend = !isOwnProfile && userId
+    ? ious.filter(
+        (iou) => iou.debtor_id === userId || iou.creditor_id === userId
+      )
+    : []
+
+  const activeIOUsWithFriend = iousWithFriend.filter(
+    (iou) => iou.status === 'active' || iou.status === 'pending' || iou.status === 'payment_pending'
+  )
+
+  const youOweCount = activeIOUsWithFriend.filter(
+    (iou) => iou.debtor_id === user?.id
+  ).length
+
+  const owesYouCount = activeIOUsWithFriend.filter(
+    (iou) => iou.creditor_id === user?.id
+  ).length
 
   const credPercentage = streetCred
     ? streetCred.total_debts > 0
@@ -341,6 +359,50 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* IOUs with this friend */}
+      {!isOwnProfile && friendshipStatus === 'friends' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-highlight/10 rounded-lg">
+              <FileText className="w-5 h-5 text-highlight" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-800">
+              IOUs with {profile?.username}
+            </h2>
+          </div>
+
+          {/* Summary */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="bg-red-50 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-danger">{youOweCount}</p>
+              <p className="text-xs text-gray-600">You owe</p>
+            </div>
+            <div className="bg-green-50 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-success">{owesYouCount}</p>
+              <p className="text-xs text-gray-600">Owes you</p>
+            </div>
+          </div>
+
+          {/* IOU List */}
+          {iousWithFriend.length > 0 ? (
+            <div className="space-y-3">
+              {iousWithFriend.slice(0, 10).map((iou) => (
+                <IOUCard key={iou.id} iou={iou} />
+              ))}
+              {iousWithFriend.length > 10 && (
+                <p className="text-center text-sm text-gray-500">
+                  And {iousWithFriend.length - 10} more...
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500 py-4">
+              No IOUs with {profile?.username} yet
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Payment History */}
       {isOwnProfile && completedIOUs.length > 0 && (
