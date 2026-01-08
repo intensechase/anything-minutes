@@ -165,10 +165,11 @@ export default function FriendsPage() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
-                    {result.username[0].toUpperCase()}
+                    {(result.first_name?.[0] || result.username[0]).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium text-light">{result.username}</p>
+                    <p className="font-medium text-light">{result.first_name || result.username}</p>
+                    <p className="text-xs text-light/40">@{result.username}</p>
                     {result.email && (
                       <p className="text-sm text-light/50">{result.email}</p>
                     )}
@@ -204,11 +205,14 @@ export default function FriendsPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
-                      {requester?.username?.[0]?.toUpperCase() || '?'}
+                      {(requester?.first_name?.[0] || requester?.username?.[0])?.toUpperCase() || '?'}
                     </div>
-                    <p className="font-medium text-light">
-                      {requester?.username || 'Unknown'}
-                    </p>
+                    <div>
+                      <p className="font-medium text-light">
+                        {requester?.first_name || requester?.username || 'Unknown'}
+                      </p>
+                      <p className="text-xs text-light/40">@{requester?.username}</p>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -249,11 +253,14 @@ export default function FriendsPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
-                      {addressee?.username?.[0]?.toUpperCase() || '?'}
+                      {(addressee?.first_name?.[0] || addressee?.username?.[0])?.toUpperCase() || '?'}
                     </div>
-                    <p className="font-medium text-light">
-                      {addressee?.username || 'Unknown'}
-                    </p>
+                    <div>
+                      <p className="font-medium text-light">
+                        {addressee?.first_name || addressee?.username || 'Unknown'}
+                      </p>
+                      <p className="text-xs text-light/40">@{addressee?.username}</p>
+                    </div>
                   </div>
                   <span className="text-sm text-light/50">Pending</span>
                 </div>
@@ -284,12 +291,13 @@ export default function FriendsPage() {
                   className="flex items-center gap-3 p-3 bg-dark rounded-lg cursor-pointer hover:bg-dark/70 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
-                    {friend?.username?.[0]?.toUpperCase() || '?'}
+                    {(friend?.first_name?.[0] || friend?.username?.[0])?.toUpperCase() || '?'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-light">
-                      {friend?.username || 'Unknown'}
+                      {friend?.first_name || friend?.username || 'Unknown'}
                     </p>
+                    <p className="text-xs text-light/40">@{friend?.username}</p>
                     {activeCount > 0 && (
                       <p className="text-sm text-accent">
                         {activeCount} active IOU{activeCount !== 1 ? 's' : ''}

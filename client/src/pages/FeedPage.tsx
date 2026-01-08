@@ -126,16 +126,16 @@ function FeedCard({ item, currentUserId, onReaction, isReacting }: FeedCardProps
       <div className="flex items-start gap-3">
         {/* Debtor avatar */}
         <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium flex-shrink-0">
-          {debtor?.username?.[0]?.toUpperCase() || '?'}
+          {(debtor?.first_name?.[0] || debtor?.username?.[0])?.toUpperCase() || '?'}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Action text */}
           <p className="text-light">
-            <span className="font-semibold">{debtor?.username || 'Unknown'}</span>
+            <span className="font-semibold">{debtor?.first_name || debtor?.username || 'Unknown'}</span>
             <span className="text-light/50"> {actionText} </span>
-            <span className="font-semibold">{creditor?.username || 'Unknown'}</span>
+            <span className="font-semibold">{creditor?.first_name || creditor?.username || 'Unknown'}</span>
           </p>
 
           {/* Description */}
@@ -147,7 +147,7 @@ function FeedCard({ item, currentUserId, onReaction, isReacting }: FeedCardProps
 
         {/* Creditor avatar */}
         <div className="w-10 h-10 rounded-full bg-success/30 flex items-center justify-center text-success font-medium flex-shrink-0">
-          {creditor?.username?.[0]?.toUpperCase() || '?'}
+          {(creditor?.first_name?.[0] || creditor?.username?.[0])?.toUpperCase() || '?'}
         </div>
       </div>
 

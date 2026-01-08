@@ -44,7 +44,8 @@ export default function CreateRecurringModal({ onClose }: CreateRecurringModalPr
     .filter((u): u is User => !!u)
 
   const filteredFriends = friends.filter((friend) =>
-    friend.username.toLowerCase().includes(searchQuery.toLowerCase())
+    friend.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    friend.first_name?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const createMutation = useMutation({
@@ -134,13 +135,11 @@ export default function CreateRecurringModal({ onClose }: CreateRecurringModalPr
                       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-accent/20 transition-colors text-left"
                     >
                       <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
-                        {friend.username[0].toUpperCase()}
+                        {(friend.first_name?.[0] || friend.username[0]).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-medium text-light">{friend.username}</p>
-                        {friend.email && (
-                          <p className="text-sm text-light/50">{friend.email}</p>
-                        )}
+                        <p className="font-medium text-light">{friend.first_name || friend.username}</p>
+                        <p className="text-xs text-light/40">@{friend.username}</p>
                       </div>
                     </button>
                   ))}
@@ -160,13 +159,14 @@ export default function CreateRecurringModal({ onClose }: CreateRecurringModalPr
               {/* Selected Friend */}
               <div className="flex items-center gap-3 p-3 bg-dark rounded-lg">
                 <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
-                  {selectedFriend?.username[0].toUpperCase()}
+                  {(selectedFriend?.first_name?.[0] || selectedFriend?.username[0])?.toUpperCase()}
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-light/50">
                     {direction === 'uome' ? 'Owes you (recurring)' : 'You owe (recurring)'}
                   </p>
-                  <p className="font-medium text-light">{selectedFriend?.username}</p>
+                  <p className="font-medium text-light">{selectedFriend?.first_name || selectedFriend?.username}</p>
+                  <p className="text-xs text-light/40">@{selectedFriend?.username}</p>
                 </div>
                 <button
                   type="button"

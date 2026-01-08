@@ -59,12 +59,12 @@ export default function RecurringIOUCard({ recurring }: RecurringIOUCardProps) {
             <div className="flex items-center gap-2 mb-1">
               <Repeat className={`w-4 h-4 ${recurring.is_active ? 'text-accent' : 'text-light/40'}`} />
               <div className="w-8 h-8 rounded-full bg-accent/30 flex items-center justify-center text-accent text-sm font-medium">
-                {otherUser?.username?.[0]?.toUpperCase() || '?'}
+                {(otherUser?.first_name?.[0] || otherUser?.username?.[0])?.toUpperCase() || '?'}
               </div>
               <div>
                 <p className="text-sm font-medium text-light">
                   {isDebtor ? 'You owe' : 'Owes you'}{' '}
-                  <span className="text-accent">{otherUser?.username || 'Unknown'}</span>
+                  <span className="text-accent">{otherUser?.first_name || otherUser?.username || 'Unknown'}</span>
                 </p>
                 <p className="text-base font-semibold text-light">{recurring.description}</p>
               </div>

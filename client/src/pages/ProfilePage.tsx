@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LogOut, Settings, Award, Receipt, UserPlus, UserMinus, Clock, Check, X, FileText, Sun, Moon } from 'lucide-react'
+import { LogOut, Settings, Award, Receipt, UserPlus, UserMinus, Clock, Check, X, FileText, Sun, Moon, Edit } from 'lucide-react'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { User } from '../types'
 import IOUCard from '../components/IOUCard'
 import CreateIOUModal from '../components/CreateIOUModal'
+import EditProfileModal from '../components/EditProfileModal'
 
 export default function ProfilePage() {
   const { userId } = useParams()
@@ -16,6 +17,7 @@ export default function ProfilePage() {
   const queryClient = useQueryClient()
   const [showSettings, setShowSettings] = useState(false)
   const [showCreateIOU, setShowCreateIOU] = useState(false)
+  const [showEditProfile, setShowEditProfile] = useState(false)
 
   const isOwnProfile = !userId || userId === user?.id
 
@@ -139,14 +141,15 @@ export default function ProfilePage() {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 rounded-full bg-accent/30 flex items-center justify-center text-3xl font-bold text-accent">
-              {profile?.username?.[0]?.toUpperCase() || '?'}
+              {(profile?.first_name?.[0] || profile?.username?.[0])?.toUpperCase() || '?'}
             </div>
             <div>
               <h1 className="text-2xl font-bold text-light">
-                {profile?.username || 'Loading...'}
+                {profile?.first_name || profile?.username || 'Loading...'}
               </h1>
+              <p className="text-light/50 text-sm">@{profile?.username}</p>
               {profile?.email && (
-                <p className="text-light/50 text-sm">{profile.email}</p>
+                <p className="text-light/40 text-xs mt-1">{profile.email}</p>
               )}
               <p className="text-light/40 text-xs mt-1">
                 Member since{' '}
@@ -162,14 +165,23 @@ export default function ProfilePage() {
           {isOwnProfile ? (
             <div className="flex gap-2">
               <button
+                onClick={() => setShowEditProfile(true)}
+                className="p-2 bg-dark rounded-lg hover:bg-dark/70 transition-colors text-light"
+                title="Edit Profile"
+              >
+                <Edit className="w-5 h-5" />
+              </button>
+              <button
                 onClick={() => setShowSettings(!showSettings)}
                 className="p-2 bg-dark rounded-lg hover:bg-dark/70 transition-colors text-light"
+                title="Settings"
               >
                 <Settings className="w-5 h-5" />
               </button>
               <button
                 onClick={signOut}
                 className="p-2 bg-dark rounded-lg hover:bg-dark/70 transition-colors text-light"
+                title="Sign Out"
               >
                 <LogOut className="w-5 h-5" />
               </button>
@@ -457,6 +469,11 @@ export default function ProfilePage() {
           onClose={() => setShowCreateIOU(false)}
           preselectedFriend={profile as User}
         />
+      )}
+
+      {/* Edit Profile Modal */}
+      {showEditProfile && (
+        <EditProfileModal onClose={() => setShowEditProfile(false)} />
       )}
     </div>
   )

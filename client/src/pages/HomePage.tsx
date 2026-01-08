@@ -31,7 +31,7 @@ export default function HomePage() {
       {/* Welcome Header */}
       <div className="bg-card rounded-xl p-6">
         <h1 className="text-2xl font-bold mb-2 text-light">
-          Welcome back, {user?.username || 'Friend'}!
+          Welcome back, {user?.first_name || user?.username || 'Friend'}!
         </h1>
         <p className="text-light/60">Here's your IOU summary</p>
       </div>
