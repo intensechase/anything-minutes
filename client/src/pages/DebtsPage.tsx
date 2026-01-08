@@ -69,18 +69,18 @@ export default function DebtsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-serif text-gray-800">Debts</h1>
+        <h1 className="text-2xl font-bold font-serif text-light">Debts</h1>
         <div className="flex flex-col gap-2">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-highlight text-white px-4 py-2 rounded-lg hover:bg-highlight/90 transition-colors"
+            className="flex items-center gap-2 bg-accent text-dark px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors"
           >
             <Plus className="w-4 h-4" />
             New IOU
           </button>
           <button
             onClick={() => setShowCreateUOMeModal(true)}
-            className="flex items-center gap-2 bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
+            className="flex items-center gap-2 bg-card text-light px-4 py-2 rounded-lg hover:bg-card/80 transition-colors"
           >
             <HandCoins className="w-4 h-4" />
             New UOMe
@@ -96,15 +96,15 @@ export default function DebtsPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
               activeTab === tab.id
-                ? 'bg-highlight text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-accent text-dark'
+                : 'bg-card text-light/70 hover:bg-card/80'
             }`}
           >
             {tab.label}
             {tab.count !== undefined && tab.count > 0 && (
               <span className={`px-1.5 py-0.5 text-xs rounded-full ${
                 activeTab === tab.id
-                  ? 'bg-white/20 text-white'
+                  ? 'bg-dark/20 text-dark'
                   : 'bg-warning text-white'
               }`}>
                 {tab.count}
@@ -117,7 +117,7 @@ export default function DebtsPage() {
       {/* IOU List */}
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-highlight"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
         </div>
       ) : filteredIOUs.length > 0 ? (
         <div className="space-y-3">
@@ -127,11 +127,11 @@ export default function DebtsPage() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <Receipt className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-700 mb-2">
+          <Receipt className="w-16 h-16 text-light/30 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-light mb-2">
             {activeTab === 'history' ? 'No completed IOUs' : 'No active IOUs'}
           </h3>
-          <p className="text-gray-500">
+          <p className="text-light/50">
             {activeTab === 'history'
               ? 'Completed and cancelled IOUs will appear here'
               : 'Create a new IOU to get started'}

@@ -11,18 +11,18 @@ const navItems = [
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-dark pb-16 md:pb-0">
+    <div className="min-h-screen bg-dark pb-24 md:pb-0">
       {/* Desktop Header */}
       <header className="hidden md:block bg-card shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold font-serif text-light">Anything Minutes</h1>
-          <nav className="flex gap-6">
+        <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
+          <h1 className="text-3xl font-bold font-serif text-light">Anything Minutes</h1>
+          <nav className="flex gap-10">
             {navItems.map(({ to, label }) => (
               <NavLink
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `text-sm font-medium transition-colors ${
+                  `text-lg font-semibold transition-colors ${
                     isActive ? 'text-accent' : 'text-light/70 hover:text-light'
                   }`
                 }
@@ -41,7 +41,7 @@ export default function Layout() {
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-dark shadow-lg">
-        <div className="flex justify-around items-center h-16">
+        <div className="flex justify-around items-center h-24">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
@@ -52,8 +52,8 @@ export default function Layout() {
                 }`
               }
             >
-              <Icon className="w-5 h-5" />
-              <span className="text-xs mt-1">{label}</span>
+              <Icon className="w-7 h-7" />
+              <span className="text-base mt-1.5 font-semibold">{label}</span>
             </NavLink>
           ))}
         </div>

@@ -73,17 +73,17 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden">
+      <div className="bg-card rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-800">
+        <div className="flex items-center justify-between p-4 border-b border-light/10">
+          <h2 className="text-lg font-semibold text-light">
             {step === 'friend' ? 'Select Friend' : 'UOMe Details'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-1 hover:bg-dark rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-light/50" />
           </button>
         </div>
 
@@ -93,13 +93,13 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
             <div className="space-y-4">
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-light/40" />
                 <input
                   type="text"
                   placeholder="Search friends..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight/50"
+                  className="w-full pl-10 pr-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/40"
                 />
               </div>
 
@@ -113,15 +113,15 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                         setSelectedFriend(friend)
                         setStep('details')
                       }}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-dark transition-colors text-left"
                     >
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-medium">
+                      <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
                         {friend.username[0].toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800">{friend.username}</p>
+                        <p className="font-medium text-light">{friend.username}</p>
                         {friend.email && (
-                          <p className="text-sm text-gray-500">{friend.email}</p>
+                          <p className="text-sm text-light/50">{friend.email}</p>
                         )}
                       </div>
                     </button>
@@ -129,7 +129,7 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">
+                  <p className="text-light/50">
                     {friends.length === 0
                       ? 'Add friends to create UOMes'
                       : 'No friends found'}
@@ -140,18 +140,18 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Selected Friend */}
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-medium">
+              <div className="flex items-center gap-3 p-3 bg-dark rounded-lg">
+                <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
                   {selectedFriend?.username[0].toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-500">Owes you</p>
-                  <p className="font-medium text-gray-800">{selectedFriend?.username}</p>
+                  <p className="text-sm text-light/50">Owes you</p>
+                  <p className="font-medium text-light">{selectedFriend?.username}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setStep('friend')}
-                  className="text-sm text-highlight hover:underline"
+                  className="text-sm text-accent hover:underline"
                 >
                   Change
                 </button>
@@ -159,7 +159,7 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-light mb-1">
                   What do they owe you? *
                 </label>
                 <input
@@ -167,14 +167,14 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g., Beer, $20, 30 minutes massage"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight/50"
+                  className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/40"
                   required
                 />
               </div>
 
               {/* Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-light mb-1">
                   Reason (optional)
                 </label>
                 <textarea
@@ -182,29 +182,29 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g., Lost the fantasy football bet"
                   rows={2}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight/50 resize-none"
+                  className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/40 resize-none"
                 />
               </div>
 
               {/* Due Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-light mb-1">
                   Due Date (optional)
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-light/40" />
                   <input
                     type="datetime-local"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-highlight/50"
+                    className="w-full pl-10 pr-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light"
                   />
                 </div>
               </div>
 
               {/* Visibility */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-light mb-2">
                   Visibility
                 </label>
                 <div className="flex gap-4">
@@ -215,9 +215,9 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                       value="private"
                       checked={visibility === 'private'}
                       onChange={() => setVisibility('private')}
-                      className="w-4 h-4 text-highlight focus:ring-highlight"
+                      className="w-4 h-4 text-accent focus:ring-accent"
                     />
-                    <span className="text-sm text-gray-700">Private</span>
+                    <span className="text-sm text-light/70">Private</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -226,15 +226,15 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                       value="public"
                       checked={visibility === 'public'}
                       onChange={() => setVisibility('public')}
-                      className="w-4 h-4 text-highlight focus:ring-highlight"
+                      className="w-4 h-4 text-accent focus:ring-accent"
                     />
-                    <span className="text-sm text-gray-700">Public</span>
+                    <span className="text-sm text-light/70">Public</span>
                   </label>
                 </div>
               </div>
 
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                <div className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-lg text-sm">
                   {error}
                 </div>
               )}
@@ -244,11 +244,11 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
 
         {/* Footer */}
         {step === 'details' && (
-          <div className="p-4 border-t bg-gray-50">
+          <div className="p-4 border-t border-light/10 bg-dark/50">
             <button
               onClick={handleSubmit}
               disabled={createMutation.isPending || !description.trim()}
-              className="w-full bg-highlight text-white py-3 rounded-lg font-medium hover:bg-highlight/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-accent text-dark py-3 rounded-lg font-medium hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {createMutation.isPending ? 'Creating...' : 'Send UOMe Request'}
             </button>

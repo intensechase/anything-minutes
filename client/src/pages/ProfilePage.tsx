@@ -133,20 +133,20 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       {/* Profile Header */}
-      <div className="bg-gradient-to-r from-primary to-secondary rounded-xl p-6 text-white">
+      <div className="bg-card rounded-xl p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-3xl font-bold">
+            <div className="w-20 h-20 rounded-full bg-accent/30 flex items-center justify-center text-3xl font-bold text-accent">
               {profile?.username?.[0]?.toUpperCase() || '?'}
             </div>
             <div>
-              <h1 className="text-2xl font-bold font-serif">
+              <h1 className="text-2xl font-bold font-serif text-light">
                 {profile?.username || 'Loading...'}
               </h1>
               {profile?.email && (
-                <p className="text-white/70 text-sm">{profile.email}</p>
+                <p className="text-light/50 text-sm">{profile.email}</p>
               )}
-              <p className="text-white/60 text-xs mt-1">
+              <p className="text-light/40 text-xs mt-1">
                 Member since{' '}
                 {profile?.created_at
                   ? new Date(profile.created_at).toLocaleDateString('en-US', {
@@ -161,13 +161,13 @@ export default function ProfilePage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowSettings(!showSettings)}
-                className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                className="p-2 bg-dark rounded-lg hover:bg-dark/70 transition-colors text-light"
               >
                 <Settings className="w-5 h-5" />
               </button>
               <button
                 onClick={signOut}
-                className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                className="p-2 bg-dark rounded-lg hover:bg-dark/70 transition-colors text-light"
               >
                 <LogOut className="w-5 h-5" />
               </button>
@@ -179,7 +179,7 @@ export default function ProfilePage() {
                 <button
                   onClick={() => sendRequestMutation.mutate()}
                   disabled={sendRequestMutation.isPending}
-                  className="flex items-center gap-2 px-4 py-2 bg-white text-primary rounded-lg font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-accent text-dark rounded-lg font-medium hover:bg-accent/90 transition-colors disabled:opacity-50"
                 >
                   <UserPlus className="w-4 h-4" />
                   {sendRequestMutation.isPending ? 'Sending...' : 'Add Friend'}
@@ -190,7 +190,7 @@ export default function ProfilePage() {
                 <button
                   onClick={() => friendshipId && cancelRequestMutation.mutate(friendshipId)}
                   disabled={cancelRequestMutation.isPending}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-dark text-light rounded-lg font-medium hover:bg-dark/70 transition-colors disabled:opacity-50"
                 >
                   <Clock className="w-4 h-4" />
                   {cancelRequestMutation.isPending ? 'Canceling...' : 'Request Sent (Cancel)'}
@@ -202,7 +202,7 @@ export default function ProfilePage() {
                   <button
                     onClick={() => friendshipId && acceptRequestMutation.mutate(friendshipId)}
                     disabled={acceptRequestMutation.isPending}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-success text-white rounded-lg font-medium hover:bg-success/90 transition-colors disabled:opacity-50"
                   >
                     <Check className="w-4 h-4" />
                     {acceptRequestMutation.isPending ? '...' : 'Accept'}
@@ -210,7 +210,7 @@ export default function ProfilePage() {
                   <button
                     onClick={() => friendshipId && declineRequestMutation.mutate(friendshipId)}
                     disabled={declineRequestMutation.isPending}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-dark text-light rounded-lg font-medium hover:bg-dark/70 transition-colors disabled:opacity-50"
                   >
                     <X className="w-4 h-4" />
                     {declineRequestMutation.isPending ? '...' : 'Decline'}
@@ -222,7 +222,7 @@ export default function ProfilePage() {
                 <div className="flex flex-col gap-2">
                   <button
                     onClick={() => setShowCreateIOU(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white text-primary rounded-lg font-medium hover:bg-white/90 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-accent text-dark rounded-lg font-medium hover:bg-accent/90 transition-colors"
                   >
                     <FileText className="w-4 h-4" />
                     Create IOU
@@ -230,7 +230,7 @@ export default function ProfilePage() {
                   <button
                     onClick={() => friendshipId && removeFriendMutation.mutate(friendshipId)}
                     disabled={removeFriendMutation.isPending}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-lg font-medium hover:bg-red-500/80 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-dark text-light rounded-lg font-medium hover:bg-danger/80 transition-colors disabled:opacity-50"
                   >
                     <UserMinus className="w-4 h-4" />
                     {removeFriendMutation.isPending ? 'Removing...' : 'Remove Friend'}
@@ -244,12 +244,12 @@ export default function ProfilePage() {
 
       {/* Settings Panel */}
       {showSettings && isOwnProfile && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-6">
-          <h2 className="text-lg font-semibold text-gray-800">Settings</h2>
+        <div className="bg-card rounded-xl p-4 space-y-6">
+          <h2 className="text-lg font-semibold text-light">Settings</h2>
 
           {/* Street Cred Visibility */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-light mb-2">
               Street Cred Visibility
             </label>
             <div className="flex gap-2">
@@ -260,8 +260,8 @@ export default function ProfilePage() {
                   disabled={updateMutation.isPending}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     profile?.street_cred_visibility === option
-                      ? 'bg-highlight text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-accent text-dark'
+                      : 'bg-dark text-light/70 hover:bg-dark/70'
                   }`}
                 >
                   {option === 'friends_only' ? 'Friends Only' : option.charAt(0).toUpperCase() + option.slice(1)}
@@ -272,26 +272,26 @@ export default function ProfilePage() {
 
           {/* Feed Visibility Toggle */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-light mb-2">
               Feed Visibility
             </label>
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs text-light/50 mb-3">
               When enabled, you can see your friends' public activity and your public activity will appear in their feeds.
             </p>
             <button
               onClick={() => feedVisibleMutation.mutate(!profile?.feed_visible)}
               disabled={feedVisibleMutation.isPending}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                profile?.feed_visible ? 'bg-highlight' : 'bg-gray-300'
+                profile?.feed_visible ? 'bg-accent' : 'bg-dark'
               }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                className={`inline-block h-4 w-4 transform rounded-full bg-light transition-transform ${
                   profile?.feed_visible ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
             </button>
-            <span className="ml-3 text-sm text-gray-600">
+            <span className="ml-3 text-sm text-light/70">
               {profile?.feed_visible ? 'Enabled' : 'Disabled'}
             </span>
           </div>
@@ -299,32 +299,32 @@ export default function ProfilePage() {
       )}
 
       {/* Street Cred */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-card rounded-xl p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-highlight/10 rounded-lg">
-            <Award className="w-6 h-6 text-highlight" />
+          <div className="p-2 bg-accent/10 rounded-lg">
+            <Award className="w-6 h-6 text-accent" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-800">Street Cred</h2>
+          <h2 className="text-lg font-semibold text-light">Street Cred</h2>
         </div>
 
         {streetCred ? (
           <div className="space-y-4">
             {/* Score Display */}
             <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold text-gray-800">
+              <span className="text-4xl font-bold text-accent">
                 {streetCred.debts_paid}
               </span>
-              <span className="text-2xl text-gray-400">/</span>
-              <span className="text-2xl text-gray-500">
+              <span className="text-2xl text-light/40">/</span>
+              <span className="text-2xl text-light/60">
                 {streetCred.total_debts}
               </span>
-              <span className="text-gray-500 mb-1">debts paid</span>
+              <span className="text-light/50 mb-1">debts paid</span>
             </div>
 
             {/* Progress Bar */}
-            <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden">
+            <div className="relative h-4 bg-dark rounded-full overflow-hidden">
               <div
-                className="absolute left-0 top-0 h-full bg-gradient-to-r from-highlight to-success rounded-full transition-all duration-500"
+                className="absolute left-0 top-0 h-full bg-gradient-to-r from-accent to-success rounded-full transition-all duration-500"
                 style={{ width: `${credPercentage}%` }}
               />
             </div>
@@ -335,24 +335,24 @@ export default function ProfilePage() {
                 <p className="text-2xl font-bold text-success">
                   {streetCred.debts_paid}
                 </p>
-                <p className="text-xs text-gray-500">Paid</p>
+                <p className="text-xs text-light/50">Paid</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-warning">
                   {streetCred.outstanding_debts}
                 </p>
-                <p className="text-xs text-gray-500">Outstanding</p>
+                <p className="text-xs text-light/50">Outstanding</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-highlight">
+                <p className="text-2xl font-bold text-accent">
                   {credPercentage}%
                 </p>
-                <p className="text-xs text-gray-500">Rate</p>
+                <p className="text-xs text-light/50">Rate</p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="text-center py-4 text-gray-500">
+          <div className="text-center py-4 text-light/50">
             {isOwnProfile
               ? 'Complete IOUs to build your street cred!'
               : 'Street cred is private'}
@@ -362,25 +362,25 @@ export default function ProfilePage() {
 
       {/* IOUs with this friend */}
       {!isOwnProfile && friendshipStatus === 'friends' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-card rounded-xl p-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-highlight/10 rounded-lg">
-              <FileText className="w-5 h-5 text-highlight" />
+            <div className="p-2 bg-accent/10 rounded-lg">
+              <FileText className="w-5 h-5 text-accent" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-800">
+            <h2 className="text-lg font-semibold text-light">
               IOUs with {profile?.username}
             </h2>
           </div>
 
           {/* Summary */}
           <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="bg-red-50 rounded-lg p-3 text-center">
+            <div className="bg-danger/10 rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-danger">{youOweCount}</p>
-              <p className="text-xs text-gray-600">You owe</p>
+              <p className="text-xs text-light/50">You owe</p>
             </div>
-            <div className="bg-green-50 rounded-lg p-3 text-center">
+            <div className="bg-success/10 rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-success">{owesYouCount}</p>
-              <p className="text-xs text-gray-600">Owes you</p>
+              <p className="text-xs text-light/50">Owes you</p>
             </div>
           </div>
 
@@ -391,13 +391,13 @@ export default function ProfilePage() {
                 <IOUCard key={iou.id} iou={iou} />
               ))}
               {iousWithFriend.length > 10 && (
-                <p className="text-center text-sm text-gray-500">
+                <p className="text-center text-sm text-light/50">
                   And {iousWithFriend.length - 10} more...
                 </p>
               )}
             </div>
           ) : (
-            <p className="text-center text-gray-500 py-4">
+            <p className="text-center text-light/50 py-4">
               No IOUs with {profile?.username} yet
             </p>
           )}
@@ -406,12 +406,12 @@ export default function ProfilePage() {
 
       {/* Payment History */}
       {isOwnProfile && completedIOUs.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-card rounded-xl p-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-success/10 rounded-lg">
               <Receipt className="w-5 h-5 text-success" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-800">
+            <h2 className="text-lg font-semibold text-light">
               Payment History
             </h2>
           </div>

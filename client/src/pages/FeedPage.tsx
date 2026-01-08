@@ -59,11 +59,11 @@ export default function FeedPage() {
   if (error && (error as any)?.response?.data?.error?.code === 'FEED_DISABLED') {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold font-serif text-gray-800">Feed</h1>
+        <h1 className="text-2xl font-bold font-serif text-light">Feed</h1>
         <div className="text-center py-12">
-          <Rss className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-700 mb-2">Feed Disabled</h3>
-          <p className="text-gray-500">
+          <Rss className="w-16 h-16 text-light/30 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-light mb-2">Feed Disabled</h3>
+          <p className="text-light/50">
             Enable feed visibility in your profile settings to see activity.
           </p>
         </div>
@@ -73,11 +73,11 @@ export default function FeedPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold font-serif text-gray-800">Feed</h1>
+      <h1 className="text-2xl font-bold font-serif text-light">Feed</h1>
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-highlight"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
         </div>
       ) : feedItems.length > 0 ? (
         <div className="space-y-4">
@@ -93,9 +93,9 @@ export default function FeedPage() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <Rss className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-700 mb-2">No public activity yet</h3>
-          <p className="text-gray-500">
+          <Rss className="w-16 h-16 text-light/30 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-light mb-2">No public activity yet</h3>
+          <p className="text-light/50">
             When you or your friends make public IOUs, they'll show up here.
           </p>
         </div>
@@ -121,45 +121,45 @@ function FeedCard({ item, currentUserId, onReaction, isReacting }: FeedCardProps
   const isInvolved = item.debtor_id === currentUserId || item.creditor_id === currentUserId
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
+    <div className="bg-card rounded-xl p-4 hover:bg-card/80 transition-colors">
       {/* Header with avatars and action */}
       <div className="flex items-start gap-3">
         {/* Debtor avatar */}
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-medium flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium flex-shrink-0">
           {debtor?.username?.[0]?.toUpperCase() || '?'}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Action text */}
-          <p className="text-gray-800">
+          <p className="text-light">
             <span className="font-semibold">{debtor?.username || 'Unknown'}</span>
-            <span className="text-gray-500"> {actionText} </span>
+            <span className="text-light/50"> {actionText} </span>
             <span className="font-semibold">{creditor?.username || 'Unknown'}</span>
           </p>
 
           {/* Description */}
-          <p className="text-gray-600 mt-1">{item.description}</p>
+          <p className="text-light/70 mt-1">{item.description}</p>
 
           {/* Timestamp */}
-          <p className="text-xs text-gray-400 mt-2">{timeAgo}</p>
+          <p className="text-xs text-light/40 mt-2">{timeAgo}</p>
         </div>
 
         {/* Creditor avatar */}
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-highlight flex items-center justify-center text-white font-medium flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-success/30 flex items-center justify-center text-success font-medium flex-shrink-0">
           {creditor?.username?.[0]?.toUpperCase() || '?'}
         </div>
       </div>
 
       {/* Reactions */}
-      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-100">
+      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-light/10">
         <button
           onClick={() => onReaction(item, 'up')}
           disabled={isReacting}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
             item.userReaction === 'up'
-              ? 'bg-green-100 text-green-600'
-              : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+              ? 'bg-success/20 text-success'
+              : 'bg-dark text-light/50 hover:bg-dark/70'
           }`}
         >
           <ThumbsUp className="w-4 h-4" />
@@ -171,8 +171,8 @@ function FeedCard({ item, currentUserId, onReaction, isReacting }: FeedCardProps
           disabled={isReacting}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
             item.userReaction === 'down'
-              ? 'bg-red-100 text-red-600'
-              : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+              ? 'bg-danger/20 text-danger'
+              : 'bg-dark text-light/50 hover:bg-dark/70'
           }`}
         >
           <ThumbsDown className="w-4 h-4" />
@@ -180,7 +180,7 @@ function FeedCard({ item, currentUserId, onReaction, isReacting }: FeedCardProps
         </button>
 
         {isInvolved && (
-          <span className="ml-auto text-xs text-highlight font-medium">You're involved</span>
+          <span className="ml-auto text-xs text-accent font-medium">You're involved</span>
         )}
       </div>
     </div>
