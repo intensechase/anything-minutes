@@ -30,7 +30,7 @@ export default function HomePage() {
     <div className="space-y-6">
       {/* Welcome Header */}
       <div className="bg-card rounded-xl p-6">
-        <h1 className="text-2xl font-bold font-serif mb-2 text-light">
+        <h1 className="text-2xl font-bold mb-2 text-light">
           Welcome back, {user?.username || 'Friend'}!
         </h1>
         <p className="text-light/60">Here's your IOU summary</p>

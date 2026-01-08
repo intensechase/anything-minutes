@@ -59,7 +59,7 @@ export default function FeedPage() {
   if (error && (error as any)?.response?.data?.error?.code === 'FEED_DISABLED') {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold font-serif text-light">Feed</h1>
+        <h1 className="text-2xl font-bold text-light">Feed</h1>
         <div className="text-center py-12">
           <Rss className="w-16 h-16 text-light/30 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-light mb-2">Feed Disabled</h3>
@@ -73,7 +73,7 @@ export default function FeedPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold font-serif text-light">Feed</h1>
+      <h1 className="text-2xl font-bold text-light">Feed</h1>
 
       {isLoading ? (
         <div className="flex justify-center py-12">

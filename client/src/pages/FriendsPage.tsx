@@ -116,7 +116,7 @@ export default function FriendsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <h1 className="text-2xl font-bold font-serif text-light">Friends</h1>
+      <h1 className="text-2xl font-bold text-light">Friends</h1>
 
       {/* Success Message */}
       {successMessage && (

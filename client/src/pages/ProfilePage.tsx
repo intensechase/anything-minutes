@@ -142,7 +142,7 @@ export default function ProfilePage() {
               {profile?.username?.[0]?.toUpperCase() || '?'}
             </div>
             <div>
-              <h1 className="text-2xl font-bold font-serif text-light">
+              <h1 className="text-2xl font-bold text-light">
                 {profile?.username || 'Loading...'}
               </h1>
               {profile?.email && (
