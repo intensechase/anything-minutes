@@ -5,11 +5,11 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    fontFamily: {
+      'sans': ['"Bebas Neue"', 'sans-serif'],
+      'display': ['"Bebas Neue"', 'sans-serif'],
+    },
     extend: {
-      fontFamily: {
-        'display': ['"Bebas Neue"', 'sans-serif'],
-        'sans': ['"Bebas Neue"', 'sans-serif'],
-      },
       colors: {
         // New dark theme palette
         dark: '#222831',      // Main background
