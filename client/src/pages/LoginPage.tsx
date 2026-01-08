@@ -1,20 +1,28 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Phone, ArrowLeft } from 'lucide-react'
+import { Phone, Mail, ArrowLeft } from 'lucide-react'
+
+type AuthMode = 'main' | 'phone' | 'email'
 
 export default function LoginPage() {
-  const { firebaseUser, loading, signInWithGoogle, sendPhoneOTP, verifyPhoneOTP } = useAuth()
+  const { firebaseUser, loading, signInWithGoogle, sendPhoneOTP, verifyPhoneOTP, signInOrSignUpWithEmail, sendPasswordReset } = useAuth()
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isSigningIn, setIsSigningIn] = useState(false)
+  const [authMode, setAuthMode] = useState<AuthMode>('main')
 
   // Phone auth state
-  const [showPhoneInput, setShowPhoneInput] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState('')
   const [otpSent, setOtpSent] = useState(false)
   const [otp, setOtp] = useState('')
   const [isSendingOTP, setIsSendingOTP] = useState(false)
   const [isVerifyingOTP, setIsVerifyingOTP] = useState(false)
+
+  // Email auth state
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isEmailLoading, setIsEmailLoading] = useState(false)
 
   if (loading) {
     return (
@@ -98,11 +106,69 @@ export default function LoginPage() {
   }
 
   const resetPhoneAuth = () => {
-    setShowPhoneInput(false)
     setPhoneNumber('')
     setOtpSent(false)
     setOtp('')
     setError(null)
+    setSuccessMessage(null)
+  }
+
+  const resetEmailAuth = () => {
+    setEmail('')
+    setPassword('')
+    setError(null)
+    setSuccessMessage(null)
+  }
+
+  const resetToMain = () => {
+    setAuthMode('main')
+    resetPhoneAuth()
+    resetEmailAuth()
+  }
+
+  const handleEmailSignIn = async () => {
+    setError(null)
+    setIsEmailLoading(true)
+    try {
+      await signInOrSignUpWithEmail(email, password)
+    } catch (err: any) {
+      if (err?.code === 'auth/wrong-password' || err?.code === 'auth/invalid-credential') {
+        setError('Incorrect password. Please try again.')
+      } else if (err?.code === 'auth/invalid-email') {
+        setError('Invalid email address.')
+      } else if (err?.code === 'auth/weak-password') {
+        setError('Password must be at least 6 characters.')
+      } else if (err?.code === 'auth/email-already-in-use') {
+        setError('An account with this email already exists. Try a different password.')
+      } else {
+        setError('Sign in failed. Please try again.')
+      }
+      console.error(err)
+    } finally {
+      setIsEmailLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setError('Please enter your email address first.')
+      return
+    }
+    setError(null)
+    setIsEmailLoading(true)
+    try {
+      await sendPasswordReset(email)
+      setSuccessMessage('Password reset email sent! Check your inbox.')
+    } catch (err: any) {
+      if (err?.code === 'auth/user-not-found') {
+        setError('No account found with this email.')
+      } else {
+        setError('Failed to send reset email. Please try again.')
+      }
+      console.error(err)
+    } finally {
+      setIsEmailLoading(false)
+    }
   }
 
   return (
@@ -131,7 +197,13 @@ export default function LoginPage() {
               </div>
             )}
 
-            {!showPhoneInput ? (
+            {successMessage && (
+              <div className="mb-4 p-3 bg-success/20 border border-success/30 text-success rounded-lg text-sm">
+                {successMessage}
+              </div>
+            )}
+
+            {authMode === 'main' ? (
               // Main login options
               <div className="space-y-3">
                 {/* Google Sign In */}
@@ -174,19 +246,28 @@ export default function LoginPage() {
 
                 {/* Phone Sign In */}
                 <button
-                  onClick={() => setShowPhoneInput(true)}
+                  onClick={() => setAuthMode('phone')}
                   className="w-full flex items-center justify-center gap-3 bg-card text-light border border-light/20 rounded-lg px-4 py-3 font-medium hover:bg-card/80 transition-colors"
                 >
                   <Phone className="w-5 h-5" />
                   Continue with Phone
                 </button>
+
+                {/* Email Sign In */}
+                <button
+                  onClick={() => setAuthMode('email')}
+                  className="w-full flex items-center justify-center gap-3 bg-card text-light border border-light/20 rounded-lg px-4 py-3 font-medium hover:bg-card/80 transition-colors"
+                >
+                  <Mail className="w-5 h-5" />
+                  Continue with Email
+                </button>
               </div>
-            ) : (
+            ) : authMode === 'phone' ? (
               // Phone auth flow
               <div className="space-y-4">
                 {/* Back button */}
                 <button
-                  onClick={resetPhoneAuth}
+                  onClick={resetToMain}
                   className="flex items-center gap-1 text-light/60 hover:text-light text-sm transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -265,6 +346,67 @@ export default function LoginPage() {
                     </button>
                   </>
                 )}
+              </div>
+            ) : (
+              // Email auth flow
+              <div className="space-y-4">
+                {/* Back button */}
+                <button
+                  onClick={resetToMain}
+                  className="flex items-center gap-1 text-light/60 hover:text-light text-sm transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to login options
+                </button>
+
+                <div>
+                  <label className="block text-sm text-light/70 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full px-4 py-3 bg-dark border border-light/20 rounded-lg text-light placeholder-light/40 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-light/70 mb-2">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="w-full px-4 py-3 bg-dark border border-light/20 rounded-lg text-light placeholder-light/40 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                  />
+                  <p className="mt-2 text-xs text-light/50">
+                    New user? We'll create your account automatically.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleEmailSignIn}
+                  disabled={isEmailLoading || !email.trim() || !password.trim()}
+                  className="w-full flex items-center justify-center gap-2 bg-accent text-dark rounded-lg px-4 py-3 font-medium hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isEmailLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-dark"></div>
+                  ) : (
+                    'Continue'
+                  )}
+                </button>
+
+                <button
+                  onClick={handleForgotPassword}
+                  disabled={isEmailLoading}
+                  className="w-full text-sm text-light/60 hover:text-light transition-colors"
+                >
+                  Forgot password?
+                </button>
               </div>
             )}
 

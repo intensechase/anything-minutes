@@ -1,5 +1,14 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth'
+import {
+  getAuth,
+  GoogleAuthProvider,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  ConfirmationResult,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from 'firebase/auth'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -39,4 +48,17 @@ export const clearRecaptcha = () => {
     recaptchaVerifier.clear()
     recaptchaVerifier = null
   }
+}
+
+// Email/Password auth helpers
+export const signInWithEmail = async (email: string, password: string) => {
+  return signInWithEmailAndPassword(auth, email, password)
+}
+
+export const createAccountWithEmail = async (email: string, password: string) => {
+  return createUserWithEmailAndPassword(auth, email, password)
+}
+
+export const resetPassword = async (email: string) => {
+  return sendPasswordResetEmail(auth, email)
 }

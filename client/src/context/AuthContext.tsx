@@ -6,7 +6,7 @@ import {
   signOut as firebaseSignOut,
   ConfirmationResult,
 } from 'firebase/auth'
-import { auth, googleProvider, setupRecaptcha, sendOTP, clearRecaptcha } from '../services/firebase'
+import { auth, googleProvider, setupRecaptcha, sendOTP, clearRecaptcha, signInWithEmail, createAccountWithEmail, resetPassword } from '../services/firebase'
 import { User } from '../types'
 import { api } from '../services/api'
 
@@ -17,6 +17,8 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>
   sendPhoneOTP: (phoneNumber: string, buttonId: string) => Promise<void>
   verifyPhoneOTP: (otp: string) => Promise<void>
+  signInOrSignUpWithEmail: (email: string, password: string) => Promise<void>
+  sendPasswordReset: (email: string) => Promise<void>
   signOut: () => Promise<void>
   getIdToken: () => Promise<string | null>
   refreshUser: () => Promise<void>
@@ -99,6 +101,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const signInOrSignUpWithEmail = async (email: string, password: string) => {
+    try {
+      // Try to sign in first
+      const result = await signInWithEmail(email, password)
+      const token = await result.user.getIdToken()
+
+      const response = await api.createOrGetUser(token)
+      if (response.success && response.data) {
+        setUser(response.data)
+      }
+    } catch (error: any) {
+      // If user doesn't exist, create account
+      if (error?.code === 'auth/user-not-found' || error?.code === 'auth/invalid-credential') {
+        try {
+          const result = await createAccountWithEmail(email, password)
+          const token = await result.user.getIdToken()
+
+          const response = await api.createOrGetUser(token)
+          if (response.success && response.data) {
+            setUser(response.data)
+          }
+        } catch (createError) {
+          console.error('Create account error:', createError)
+          throw createError
+        }
+      } else {
+        console.error('Email sign-in error:', error)
+        throw error
+      }
+    }
+  }
+
+  const sendPasswordReset = async (email: string) => {
+    await resetPassword(email)
+  }
+
   const signOut = async () => {
     await firebaseSignOut(auth)
     setUser(null)
@@ -133,6 +171,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithGoogle,
         sendPhoneOTP,
         verifyPhoneOTP,
+        signInOrSignUpWithEmail,
+        sendPasswordReset,
         signOut,
         getIdToken,
         refreshUser,
