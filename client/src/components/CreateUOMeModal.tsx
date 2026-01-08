@@ -115,7 +115,7 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                         setSelectedFriend(friend)
                         setStep('details')
                       }}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-dark transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-accent/20 transition-colors text-left"
                     >
                       <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-medium">
                         {friend.username[0].toUpperCase()}
