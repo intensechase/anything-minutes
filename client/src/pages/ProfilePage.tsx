@@ -657,7 +657,7 @@ export default function ProfilePage() {
               <FileText className="w-5 h-5 text-accent" />
             </div>
             <h2 className="text-lg font-semibold text-light">
-              IOUs with {profile?.username}
+              IOUs with {profile?.first_name || profile?.username}
             </h2>
           </div>
 
@@ -687,7 +687,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <p className="text-center text-light/50 py-4">
-              No IOUs with {profile?.username} yet
+              No IOUs with {profile?.first_name || profile?.username} yet
             </p>
           )}
         </div>
