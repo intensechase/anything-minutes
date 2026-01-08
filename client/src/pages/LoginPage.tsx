@@ -38,7 +38,7 @@ export default function LoginPage() {
         <div className="bg-card rounded-xl shadow-xl overflow-hidden">
           {/* Header */}
           <div className="bg-dark px-8 py-12 text-center">
-            <h1 className="text-4xl font-bold text-light font-serif mb-2">
+            <h1 className="text-5xl font-display text-light tracking-wide mb-2">
               Anything Minutes
             </h1>
             <p className="text-light/60 text-sm">

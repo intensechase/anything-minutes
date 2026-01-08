@@ -60,7 +60,7 @@ export default function SetupPage() {
         <div className="bg-card rounded-xl shadow-xl overflow-hidden">
           {/* Header */}
           <div className="bg-accent px-8 py-10 text-center">
-            <h1 className="text-3xl font-bold text-dark font-serif mb-2">
+            <h1 className="text-4xl font-display text-dark tracking-wide mb-2">
               Welcome to Anything Minutes!
             </h1>
             <p className="text-dark/70 text-sm">

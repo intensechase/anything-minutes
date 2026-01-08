@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'display': ['"Bebas Neue"', 'sans-serif'],
+      },
       colors: {
         // New dark theme palette
         dark: '#222831',      // Main background

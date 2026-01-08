@@ -15,7 +15,7 @@ export default function Layout() {
       {/* Desktop Header */}
       <header className="hidden md:block bg-card shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold font-serif text-light">Anything Minutes</h1>
+          <h1 className="text-4xl font-display text-light tracking-wide">Anything Minutes</h1>
           <nav className="flex gap-10">
             {navItems.map(({ to, label }) => (
               <NavLink
