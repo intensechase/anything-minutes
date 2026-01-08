@@ -1,25 +1,35 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { X, Search, Calendar, DollarSign } from 'lucide-react'
+import { X, Search, DollarSign, Repeat } from 'lucide-react'
 import { api } from '../services/api'
 import { User } from '../types'
 
-interface CreateUOMeModalProps {
+interface CreateRecurringModalProps {
   onClose: () => void
-  preselectedFriend?: User | null  // Optional: skip friend selection step
 }
 
-export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUOMeModalProps) {
+const DAYS_OF_WEEK = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+]
+
+export default function CreateRecurringModal({ onClose }: CreateRecurringModalProps) {
   const queryClient = useQueryClient()
-  // Start on details step if friend is pre-selected
-  const [step, setStep] = useState<'friend' | 'details'>(preselectedFriend ? 'details' : 'friend')
+  const [step, setStep] = useState<'friend' | 'details'>('friend')
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedFriend, setSelectedFriend] = useState<User | null>(preselectedFriend || null)
+  const [selectedFriend, setSelectedFriend] = useState<User | null>(null)
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
   const [notes, setNotes] = useState('')
   const [visibility, setVisibility] = useState<'private' | 'public'>('private')
-  const [dueDate, setDueDate] = useState('')
+  const [frequency, setFrequency] = useState<'weekly' | 'monthly'>('weekly')
+  const [dayOfWeek, setDayOfWeek] = useState(5) // Friday
+  const [dayOfMonth, setDayOfMonth] = useState(1)
   const [error, setError] = useState<string | null>(null)
 
   const { data: friendsData } = useQuery({
@@ -38,20 +48,22 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
 
   const createMutation = useMutation({
     mutationFn: () =>
-      api.createUOMe({
-        debtor_id: selectedFriend!.id,  // Friend is the debtor (they owe you)
+      api.createRecurringIOU({
+        debtor_id: selectedFriend!.id,
         description,
         visibility,
-        due_date: dueDate || undefined,
         notes: notes || undefined,
         amount: amount ? parseFloat(amount) : undefined,
+        frequency,
+        day_of_week: frequency === 'weekly' ? dayOfWeek : undefined,
+        day_of_month: frequency === 'monthly' ? dayOfMonth : undefined,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ious'] })
+      queryClient.invalidateQueries({ queryKey: ['recurring'] })
       onClose()
     },
     onError: (err) => {
-      setError('Failed to create UOMe. Please try again.')
+      setError('Failed to create recurring IOU. Please try again.')
       console.error(err)
     },
   })
@@ -78,8 +90,9 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
       <div className="bg-card rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-light/10">
-          <h2 className="text-lg font-semibold text-light">
-            {step === 'friend' ? 'Select Friend' : 'UOMe Details'}
+          <h2 className="text-lg font-semibold text-light flex items-center gap-2">
+            <Repeat className="w-5 h-5 text-accent" />
+            {step === 'friend' ? 'Select Friend' : 'Recurring IOU Details'}
           </h2>
           <button
             onClick={onClose}
@@ -133,7 +146,7 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                 <div className="text-center py-8">
                   <p className="text-light/50">
                     {friends.length === 0
-                      ? 'Add friends to create UOMes'
+                      ? 'Add friends to create recurring IOUs'
                       : 'No friends found'}
                   </p>
                 </div>
@@ -147,7 +160,7 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                   {selectedFriend?.username[0].toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-light/50">Owes you</p>
+                  <p className="text-sm text-light/50">Owes you (recurring)</p>
                   <p className="font-medium text-light">{selectedFriend?.username}</p>
                 </div>
                 <button
@@ -168,7 +181,7 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g., Beer, $20, 30 minutes massage"
+                  placeholder="e.g., Weekly allowance, Monthly rent contribution"
                   className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/40"
                   required
                 />
@@ -191,39 +204,91 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                     className="w-full pl-10 pr-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/40"
                   />
                 </div>
-                <p className="text-xs text-light/40 mt-1">
-                  For monetary IOUs - enables partial payment tracking
-                </p>
               </div>
+
+              {/* Frequency */}
+              <div>
+                <label className="block text-sm font-medium text-light mb-2">
+                  Frequency
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="frequency"
+                      value="weekly"
+                      checked={frequency === 'weekly'}
+                      onChange={() => setFrequency('weekly')}
+                      className="w-4 h-4 text-accent focus:ring-accent"
+                    />
+                    <span className="text-sm text-light/70">Weekly</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="frequency"
+                      value="monthly"
+                      checked={frequency === 'monthly'}
+                      onChange={() => setFrequency('monthly')}
+                      className="w-4 h-4 text-accent focus:ring-accent"
+                    />
+                    <span className="text-sm text-light/70">Monthly</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Day Selection */}
+              {frequency === 'weekly' ? (
+                <div>
+                  <label className="block text-sm font-medium text-light mb-1">
+                    Day of Week
+                  </label>
+                  <select
+                    value={dayOfWeek}
+                    onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
+                    className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light"
+                  >
+                    {DAYS_OF_WEEK.map((day) => (
+                      <option key={day.value} value={day.value}>
+                        {day.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-light mb-1">
+                    Day of Month
+                  </label>
+                  <select
+                    value={dayOfMonth}
+                    onChange={(e) => setDayOfMonth(parseInt(e.target.value))}
+                    className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light"
+                  >
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                      <option key={day} value={day}>
+                        {day}{day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-light/40 mt-1">
+                    For months with fewer days, it will be the last day of the month
+                  </p>
+                </div>
+              )}
 
               {/* Notes */}
               <div>
                 <label className="block text-sm font-medium text-light mb-1">
-                  Reason (optional)
+                  Notes (optional)
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g., Lost the fantasy football bet"
+                  placeholder="e.g., Allowance for chores"
                   rows={2}
                   className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/40 resize-none"
                 />
-              </div>
-
-              {/* Due Date */}
-              <div>
-                <label className="block text-sm font-medium text-light mb-1">
-                  Due Date (optional)
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-light/40" />
-                  <input
-                    type="datetime-local"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light"
-                  />
-                </div>
               </div>
 
               {/* Visibility */}
@@ -274,7 +339,7 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
               disabled={createMutation.isPending || !description.trim()}
               className="w-full bg-accent text-dark py-3 rounded-lg font-medium hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {createMutation.isPending ? 'Creating...' : 'Send UOMe Request'}
+              {createMutation.isPending ? 'Creating...' : 'Create Recurring IOU'}
             </button>
           </div>
         )}

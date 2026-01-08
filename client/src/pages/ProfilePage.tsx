@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LogOut, Settings, Award, Receipt, UserPlus, UserMinus, Clock, Check, X, FileText } from 'lucide-react'
+import { LogOut, Settings, Award, Receipt, UserPlus, UserMinus, Clock, Check, X, FileText, Sun, Moon } from 'lucide-react'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { User } from '../types'
 import IOUCard from '../components/IOUCard'
 import CreateIOUModal from '../components/CreateIOUModal'
@@ -11,6 +12,7 @@ import CreateIOUModal from '../components/CreateIOUModal'
 export default function ProfilePage() {
   const { userId } = useParams()
   const { user, signOut } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const queryClient = useQueryClient()
   const [showSettings, setShowSettings] = useState(false)
   const [showCreateIOU, setShowCreateIOU] = useState(false)
@@ -294,6 +296,32 @@ export default function ProfilePage() {
             <span className="ml-3 text-sm text-light/70">
               {profile?.feed_visible ? 'Enabled' : 'Disabled'}
             </span>
+          </div>
+
+          {/* Theme Toggle */}
+          <div>
+            <label className="block text-sm font-medium text-light mb-2">
+              Theme
+            </label>
+            <p className="text-xs text-light/50 mb-3">
+              Switch between dark and light mode.
+            </p>
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-3 px-4 py-2 bg-dark rounded-lg hover:bg-dark/70 transition-colors"
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Moon className="w-5 h-5 text-accent" />
+                  <span className="text-sm text-light">Dark Mode</span>
+                </>
+              ) : (
+                <>
+                  <Sun className="w-5 h-5 text-warning" />
+                  <span className="text-sm text-light">Light Mode</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}

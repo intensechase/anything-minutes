@@ -2,11 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-dark: #222831;
+  --color-card: #393e46;
+  --color-accent: #00adb5;
+  --color-light: #eeeeee;
+}
+
+/* Light theme overrides */
+.light-theme {
+  --color-dark: #f5f5f5;
+  --color-card: #ffffff;
+  --color-accent: #00adb5;
+  --color-light: #222831;
+}
+
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #222831;
+  background-color: var(--color-dark);
+  transition: background-color 0.3s ease;
 }
 
 h1, h2, h3 {
   font-family: 'Playfair Display', serif;
+}
+
+/* Override Tailwind colors with CSS variables for theme support */
+.bg-dark { background-color: var(--color-dark) !important; }
+.bg-card { background-color: var(--color-card) !important; }
+.bg-accent { background-color: var(--color-accent) !important; }
+.text-light { color: var(--color-light) !important; }
+.text-dark { color: var(--color-dark) !important; }
+.border-dark { border-color: var(--color-dark) !important; }
+.border-light { border-color: var(--color-light) !important; }
+
+/* Light theme specific adjustments */
+.light-theme .text-light\/50 { color: rgba(34, 40, 49, 0.5) !important; }
+.light-theme .text-light\/40 { color: rgba(34, 40, 49, 0.4) !important; }
+.light-theme .text-light\/60 { color: rgba(34, 40, 49, 0.6) !important; }
+.light-theme .text-light\/70 { color: rgba(34, 40, 49, 0.7) !important; }
+.light-theme .bg-dark\/50 { background-color: rgba(245, 245, 245, 0.5) !important; }
+.light-theme .border-light\/10 { border-color: rgba(34, 40, 49, 0.1) !important; }
+.light-theme .border-light\/20 { border-color: rgba(34, 40, 49, 0.2) !important; }
+.light-theme .bg-accent\/10 { background-color: rgba(0, 173, 181, 0.1) !important; }
+.light-theme .bg-accent\/30 { background-color: rgba(0, 173, 181, 0.3) !important; }
+
+/* Light theme shadows for depth */
+.light-theme .bg-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }

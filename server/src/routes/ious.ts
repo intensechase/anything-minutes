@@ -19,7 +19,8 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
       .select(`
         *,
         debtor:users!ious_debtor_id_fkey(*),
-        creditor:users!ious_creditor_id_fkey(*)
+        creditor:users!ious_creditor_id_fkey(*),
+        payments(*)
       `)
 
     if (filter === 'owed_by_me') {
@@ -36,7 +37,13 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
 
     if (error) throw error
 
-    res.json({ success: true, data })
+    // Calculate amount_paid for each IOU
+    const iousWithTotals = data?.map(iou => ({
+      ...iou,
+      amount_paid: iou.payments?.reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0
+    }))
+
+    res.json({ success: true, data: iousWithTotals })
   } catch (error) {
     console.error('Get IOUs error:', error)
     res.status(500).json({
@@ -49,7 +56,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
 // Create IOU (debtor creates - "I owe you")
 router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
-  const { creditor_id, description, visibility, due_date, notes } = req.body
+  const { creditor_id, description, visibility, due_date, notes, amount } = req.body
 
   if (!creditor_id || !description) {
     res.status(400).json({
@@ -84,6 +91,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
         debtor_id: userId,
         creditor_id,
         description,
+        amount: amount || null,
         visibility: visibility || 'private',
         due_date: due_date || null,
         notes: notes || null,
@@ -112,7 +120,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
 // Create UOMe (creditor creates - "You owe me")
 router.post('/uome', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
-  const { debtor_id, description, visibility, due_date, notes } = req.body
+  const { debtor_id, description, visibility, due_date, notes, amount } = req.body
 
   if (!debtor_id || !description) {
     res.status(400).json({
@@ -147,6 +155,7 @@ router.post('/uome', async (req: AuthenticatedRequest, res: Response): Promise<v
         debtor_id,
         creditor_id: userId,  // Current user is the creditor
         description,
+        amount: amount || null,
         visibility: visibility || 'private',
         due_date: due_date || null,
         notes: notes || null,
@@ -168,6 +177,69 @@ router.post('/uome', async (req: AuthenticatedRequest, res: Response): Promise<v
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to create UOMe' },
+    })
+  }
+})
+
+// Add a payment to an IOU
+router.post('/:id/payments', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const userId = req.user!.userId
+  const { id } = req.params
+  const { amount, description } = req.body
+
+  if (!description) {
+    res.status(400).json({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: 'description is required' },
+    })
+    return
+  }
+
+  try {
+    // Verify user is involved in the IOU
+    const { data: iou } = await supabase
+      .from('ious')
+      .select('*')
+      .eq('id', id)
+      .or(`debtor_id.eq.${userId},creditor_id.eq.${userId}`)
+      .single()
+
+    if (!iou) {
+      res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'IOU not found or access denied' },
+      })
+      return
+    }
+
+    if (iou.status !== 'active') {
+      res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_STATUS', message: 'Can only add payments to active IOUs' },
+      })
+      return
+    }
+
+    // Create the payment
+    const { data: payment, error } = await supabase
+      .from('payments')
+      .insert({
+        iou_id: id,
+        amount: amount || null,
+        description,
+        created_by: userId,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    res.json({ success: true, data: payment })
+  } catch (error) {
+    console.error('Add payment error:', error)
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'Failed to add payment' },
     })
   }
 })

@@ -7,6 +7,7 @@ import usersRoutes from './routes/users.js'
 import iousRoutes from './routes/ious.js'
 import profileRoutes from './routes/profile.js'
 import feedRoutes from './routes/feed.js'
+import recurringRoutes from './routes/recurring.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -22,6 +23,7 @@ app.use('/api/users', usersRoutes)
 app.use('/api/ious', iousRoutes)
 app.use('/api/profile', profileRoutes)
 app.use('/api/feed', feedRoutes)
+app.use('/api/recurring', recurringRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {

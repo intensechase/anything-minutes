@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { X, Search, Calendar } from 'lucide-react'
+import { X, Search, Calendar, DollarSign } from 'lucide-react'
 import { api } from '../services/api'
 import { User } from '../types'
 
@@ -16,6 +16,7 @@ export default function CreateIOUModal({ onClose, preselectedFriend }: CreateIOU
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFriend, setSelectedFriend] = useState<User | null>(preselectedFriend || null)
   const [description, setDescription] = useState('')
+  const [amount, setAmount] = useState('')
   const [notes, setNotes] = useState('')
   const [visibility, setVisibility] = useState<'private' | 'public'>('private')
   const [dueDate, setDueDate] = useState('')
@@ -43,6 +44,7 @@ export default function CreateIOUModal({ onClose, preselectedFriend }: CreateIOU
         visibility,
         due_date: dueDate || undefined,
         notes: notes || undefined,
+        amount: amount ? parseFloat(amount) : undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ious'] })
@@ -170,6 +172,28 @@ export default function CreateIOUModal({ onClose, preselectedFriend }: CreateIOU
                   className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/40"
                   required
                 />
+              </div>
+
+              {/* Amount */}
+              <div>
+                <label className="block text-sm font-medium text-light mb-1">
+                  Amount (optional)
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-light/40" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full pl-10 pr-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/40"
+                  />
+                </div>
+                <p className="text-xs text-light/40 mt-1">
+                  For monetary IOUs - enables partial payment tracking
+                </p>
               </div>
 
               {/* Notes */}

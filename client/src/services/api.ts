@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { auth } from './firebase'
-import { User, Friendship, IOU, StreetCred, ApiResponse, FeedItem } from '../types'
+import { User, Friendship, IOU, StreetCred, ApiResponse, FeedItem, Payment, RecurringIOU } from '../types'
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api',
@@ -102,6 +102,7 @@ export const api = {
     visibility: 'private' | 'public'
     due_date?: string
     notes?: string
+    amount?: number
   }): Promise<ApiResponse<IOU>> {
     const { data } = await apiClient.post('/ious', iou)
     return data
@@ -114,8 +115,18 @@ export const api = {
     visibility: 'private' | 'public'
     due_date?: string
     notes?: string
+    amount?: number
   }): Promise<ApiResponse<IOU>> {
     const { data } = await apiClient.post('/ious/uome', uome)
+    return data
+  },
+
+  // Add a partial payment to an IOU
+  async addPayment(iouId: string, payment: {
+    description: string
+    amount?: number
+  }): Promise<ApiResponse<Payment>> {
+    const { data } = await apiClient.post(`/ious/${iouId}/payments`, payment)
     return data
   },
 
@@ -152,6 +163,50 @@ export const api = {
 
   async removeReaction(iouId: string): Promise<ApiResponse<void>> {
     const { data } = await apiClient.delete(`/feed/${iouId}/react`)
+    return data
+  },
+
+  // Recurring IOUs
+  async getRecurringIOUs(): Promise<ApiResponse<RecurringIOU[]>> {
+    const { data } = await apiClient.get('/recurring')
+    return data
+  },
+
+  async createRecurringIOU(recurring: {
+    debtor_id: string
+    description: string
+    amount?: number
+    visibility?: 'private' | 'public'
+    notes?: string
+    frequency: 'weekly' | 'monthly'
+    day_of_week?: number
+    day_of_month?: number
+  }): Promise<ApiResponse<RecurringIOU>> {
+    const { data } = await apiClient.post('/recurring', recurring)
+    return data
+  },
+
+  async updateRecurringIOU(id: string, updates: {
+    description?: string
+    amount?: number
+    visibility?: 'private' | 'public'
+    notes?: string
+    frequency?: 'weekly' | 'monthly'
+    day_of_week?: number
+    day_of_month?: number
+    is_active?: boolean
+  }): Promise<ApiResponse<RecurringIOU>> {
+    const { data } = await apiClient.put(`/recurring/${id}`, updates)
+    return data
+  },
+
+  async deleteRecurringIOU(id: string): Promise<ApiResponse<void>> {
+    const { data } = await apiClient.delete(`/recurring/${id}`)
+    return data
+  },
+
+  async generateRecurringIOUs(): Promise<ApiResponse<{ generated_count: number; generated: IOU[] }>> {
+    const { data } = await apiClient.post('/recurring/generate')
     return data
   },
 }

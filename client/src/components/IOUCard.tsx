@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Clock, Check, X } from 'lucide-react'
+import { Clock, Check, X, DollarSign, Plus } from 'lucide-react'
 import { formatDistanceToNow, isPast, format } from 'date-fns'
 import { IOU } from '../types'
 import { api } from '../services/api'
@@ -14,10 +14,17 @@ export default function IOUCard({ iou }: IOUCardProps) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const [expanded, setExpanded] = useState(false)
+  const [showPaymentForm, setShowPaymentForm] = useState(false)
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [paymentDescription, setPaymentDescription] = useState('')
 
   const isDebtor = iou.debtor_id === user?.id
   const otherUser = isDebtor ? iou.creditor : iou.debtor
   const isOverdue = iou.due_date && isPast(new Date(iou.due_date)) && iou.status === 'active'
+
+  // Calculate remaining balance
+  const amountPaid = iou.amount_paid || 0
+  const remaining = iou.amount ? iou.amount - amountPaid : null
 
   const acceptMutation = useMutation({
     mutationFn: () => api.acceptIOU(iou.id),
@@ -33,6 +40,26 @@ export default function IOUCard({ iou }: IOUCardProps) {
     mutationFn: () => api.markPaid(iou.id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ious'] }),
   })
+
+  const addPaymentMutation = useMutation({
+    mutationFn: () => api.addPayment(iou.id, {
+      description: paymentDescription,
+      amount: paymentAmount ? parseFloat(paymentAmount) : undefined,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ious'] })
+      setShowPaymentForm(false)
+      setPaymentAmount('')
+      setPaymentDescription('')
+    },
+  })
+
+  const handleAddPayment = (e: React.FormEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!paymentDescription.trim()) return
+    addPaymentMutation.mutate()
+  }
 
   const getStatusColor = () => {
     if (isOverdue) return 'border-l-danger bg-danger/10'
@@ -114,6 +141,28 @@ export default function IOUCard({ iou }: IOUCardProps) {
                 <p className="text-base font-semibold text-light">{iou.description}</p>
               </div>
             </div>
+
+            {/* Amount display */}
+            {iou.amount && (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-1 text-sm">
+                  <DollarSign className="w-4 h-4 text-accent" />
+                  <span className="text-light font-medium">${iou.amount.toFixed(2)}</span>
+                </div>
+                {amountPaid > 0 && (
+                  <>
+                    <span className="text-light/40">•</span>
+                    <span className="text-sm text-success">${amountPaid.toFixed(2)} paid</span>
+                    {remaining !== null && remaining > 0 && (
+                      <>
+                        <span className="text-light/40">•</span>
+                        <span className="text-sm text-warning">${remaining.toFixed(2)} remaining</span>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
           {getStatusBadge()}
         </div>
@@ -144,6 +193,86 @@ export default function IOUCard({ iou }: IOUCardProps) {
             )}
           </div>
 
+          {/* Payment History */}
+          {iou.payments && iou.payments.length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-light mb-2">Payment History</h4>
+              <div className="space-y-2">
+                {iou.payments.map((payment) => (
+                  <div key={payment.id} className="flex items-center justify-between text-sm bg-dark/50 rounded-lg p-2">
+                    <div>
+                      <span className="text-light">{payment.description}</span>
+                      {payment.amount && (
+                        <span className="text-success ml-2">${payment.amount.toFixed(2)}</span>
+                      )}
+                    </div>
+                    <span className="text-xs text-light/40">
+                      {format(new Date(payment.paid_at), 'MMM d, yyyy h:mm a')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Add Payment Form */}
+          {showPaymentForm && iou.status === 'active' && (
+            <form onSubmit={handleAddPayment} className="mb-4 bg-dark/50 rounded-lg p-3 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-light/70 mb-1">
+                  Description *
+                </label>
+                <input
+                  type="text"
+                  value={paymentDescription}
+                  onChange={(e) => setPaymentDescription(e.target.value)}
+                  placeholder="e.g., Partial payment, Half paid"
+                  className="w-full px-3 py-2 bg-dark border border-light/20 rounded-lg text-sm text-light placeholder-light/40 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                  onClick={(e) => e.stopPropagation()}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-light/70 mb-1">
+                  Amount (optional)
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-light/40" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full pl-9 pr-3 py-2 bg-dark border border-light/20 rounded-lg text-sm text-light placeholder-light/40 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={addPaymentMutation.isPending || !paymentDescription.trim()}
+                  className="flex-1 bg-accent text-dark py-2 rounded-lg text-sm font-medium hover:bg-accent/90 disabled:opacity-50"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {addPaymentMutation.isPending ? 'Adding...' : 'Add Payment'}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowPaymentForm(false)
+                  }}
+                  className="px-4 py-2 bg-dark text-light/70 rounded-lg text-sm hover:bg-dark/70"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
           {/* Actions based on status and role */}
           <div className="flex gap-2">
             {/* Pending IOU - non-creator can accept/decline */}
@@ -172,6 +301,20 @@ export default function IOUCard({ iou }: IOUCardProps) {
                   Decline
                 </button>
               </>
+            )}
+
+            {/* Active IOU - add payment button */}
+            {iou.status === 'active' && !showPaymentForm && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowPaymentForm(true)
+                }}
+                className="flex items-center justify-center gap-1 bg-dark text-light px-3 py-2 rounded-lg text-sm font-medium hover:bg-dark/70"
+              >
+                <Plus className="w-4 h-4" />
+                Log Payment
+              </button>
             )}
 
             {/* Active IOU - creditor can mark as paid */}
