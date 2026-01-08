@@ -226,12 +226,13 @@ router.get('/me', async (req: AuthenticatedRequest, res: Response): Promise<void
 
 // Get user profile by ID (excludes email/phone for privacy)
 router.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const userId = req.user!.userId
   const { id } = req.params
 
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id, username, first_name, profile_pic_url, street_cred_visibility, created_at')
+      .select('id, username, first_name, profile_pic_url, street_cred_visibility, profile_visibility, created_at')
       .eq('id', id)
       .single()
 
@@ -242,6 +243,35 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
         error: { code: 'NOT_FOUND', message: 'User not found' },
       })
       return
+    }
+
+    // Check profile visibility if viewing someone else's profile
+    if (id !== userId && data.profile_visibility === 'friends_only') {
+      // Check if they are friends
+      const { data: friendship } = await supabase
+        .from('friendships')
+        .select('id')
+        .or(
+          `and(requester_id.eq.${userId},addressee_id.eq.${id}),and(requester_id.eq.${id},addressee_id.eq.${userId})`
+        )
+        .eq('status', 'accepted')
+        .single()
+
+      if (!friendship) {
+        // Return limited profile info for non-friends
+        res.json({
+          success: true,
+          data: {
+            id: data.id,
+            username: data.username,
+            first_name: data.first_name,
+            profile_pic_url: data.profile_pic_url,
+            profile_visibility: data.profile_visibility,
+            limited: true  // Flag to indicate limited profile
+          }
+        })
+        return
+      }
     }
 
     res.json({ success: true, data })

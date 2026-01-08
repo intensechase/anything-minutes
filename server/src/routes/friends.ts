@@ -66,8 +66,8 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
       .from('friendships')
       .select(`
         *,
-        requester:users!friendships_requester_id_fkey(*),
-        addressee:users!friendships_addressee_id_fkey(*)
+        requester:users!friendships_requester_id_fkey(id, username, first_name, profile_pic_url),
+        addressee:users!friendships_addressee_id_fkey(id, username, first_name, profile_pic_url)
       `)
       .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
       .eq('status', 'accepted')
@@ -93,8 +93,8 @@ router.get('/requests', async (req: AuthenticatedRequest, res: Response): Promis
       .from('friendships')
       .select(`
         *,
-        requester:users!friendships_requester_id_fkey(*),
-        addressee:users!friendships_addressee_id_fkey(*)
+        requester:users!friendships_requester_id_fkey(id, username, first_name, profile_pic_url),
+        addressee:users!friendships_addressee_id_fkey(id, username, first_name, profile_pic_url)
       `)
       .eq('addressee_id', userId)
       .eq('status', 'pending')
@@ -215,8 +215,8 @@ router.post('/request', async (req: AuthenticatedRequest, res: Response): Promis
       })
       .select(`
         *,
-        requester:users!friendships_requester_id_fkey(*),
-        addressee:users!friendships_addressee_id_fkey(*)
+        requester:users!friendships_requester_id_fkey(id, username, first_name, profile_pic_url),
+        addressee:users!friendships_addressee_id_fkey(id, username, first_name, profile_pic_url)
       `)
       .single()
 
@@ -246,8 +246,8 @@ router.post('/:id/accept', async (req: AuthenticatedRequest, res: Response): Pro
       .eq('status', 'pending')
       .select(`
         *,
-        requester:users!friendships_requester_id_fkey(*),
-        addressee:users!friendships_addressee_id_fkey(*)
+        requester:users!friendships_requester_id_fkey(id, username, first_name, profile_pic_url),
+        addressee:users!friendships_addressee_id_fkey(id, username, first_name, profile_pic_url)
       `)
       .single()
 

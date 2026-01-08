@@ -53,9 +53,18 @@ export async function authMiddleware(
       .eq('firebase_uid', decodedToken.uid)
       .single()
 
+    // Reject if user doesn't exist in database
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        error: { code: 'USER_NOT_FOUND', message: 'User account not found' },
+      })
+      return
+    }
+
     req.user = {
       uid: decodedToken.uid,
-      userId: user?.id || '',
+      userId: user.id,
     }
 
     next()

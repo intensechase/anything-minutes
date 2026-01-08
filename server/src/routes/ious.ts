@@ -18,8 +18,8 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
       .from('ious')
       .select(`
         *,
-        debtor:users!ious_debtor_id_fkey(*),
-        creditor:users!ious_creditor_id_fkey(*),
+        debtor:users!ious_debtor_id_fkey(id, username, first_name, profile_pic_url),
+        creditor:users!ious_creditor_id_fkey(id, username, first_name, profile_pic_url),
         payments(*)
       `)
 
@@ -100,8 +100,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       })
       .select(`
         *,
-        debtor:users!ious_debtor_id_fkey(*),
-        creditor:users!ious_creditor_id_fkey(*)
+        debtor:users!ious_debtor_id_fkey(id, username, first_name, profile_pic_url),
+        creditor:users!ious_creditor_id_fkey(id, username, first_name, profile_pic_url)
       `)
       .single()
 
@@ -164,8 +164,8 @@ router.post('/uome', async (req: AuthenticatedRequest, res: Response): Promise<v
       })
       .select(`
         *,
-        debtor:users!ious_debtor_id_fkey(*),
-        creditor:users!ious_creditor_id_fkey(*)
+        debtor:users!ious_debtor_id_fkey(id, username, first_name, profile_pic_url),
+        creditor:users!ious_creditor_id_fkey(id, username, first_name, profile_pic_url)
       `)
       .single()
 
@@ -284,8 +284,8 @@ router.post('/:id/accept', async (req: AuthenticatedRequest, res: Response): Pro
       .eq('id', id)
       .select(`
         *,
-        debtor:users!ious_debtor_id_fkey(*),
-        creditor:users!ious_creditor_id_fkey(*)
+        debtor:users!ious_debtor_id_fkey(id, username, first_name, profile_pic_url),
+        creditor:users!ious_creditor_id_fkey(id, username, first_name, profile_pic_url)
       `)
       .single()
 
@@ -371,8 +371,8 @@ router.post('/:id/mark-paid', async (req: AuthenticatedRequest, res: Response): 
       .eq('status', 'active')
       .select(`
         *,
-        debtor:users!ious_debtor_id_fkey(*),
-        creditor:users!ious_creditor_id_fkey(*)
+        debtor:users!ious_debtor_id_fkey(id, username, first_name, profile_pic_url),
+        creditor:users!ious_creditor_id_fkey(id, username, first_name, profile_pic_url)
       `)
       .single()
 

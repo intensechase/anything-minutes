@@ -47,8 +47,8 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
       .from('recurring_ious')
       .select(`
         *,
-        debtor:users!recurring_ious_debtor_id_fkey(*),
-        creditor:users!recurring_ious_creditor_id_fkey(*)
+        debtor:users!recurring_ious_debtor_id_fkey(id, username, first_name, profile_pic_url),
+        creditor:users!recurring_ious_creditor_id_fkey(id, username, first_name, profile_pic_url)
       `)
       .or(`debtor_id.eq.${userId},creditor_id.eq.${userId}`)
       .order('created_at', { ascending: false })
@@ -140,8 +140,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       })
       .select(`
         *,
-        debtor:users!recurring_ious_debtor_id_fkey(*),
-        creditor:users!recurring_ious_creditor_id_fkey(*)
+        debtor:users!recurring_ious_debtor_id_fkey(id, username, first_name, profile_pic_url),
+        creditor:users!recurring_ious_creditor_id_fkey(id, username, first_name, profile_pic_url)
       `)
       .single()
 
@@ -216,8 +216,8 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
       .eq('id', id)
       .select(`
         *,
-        debtor:users!recurring_ious_debtor_id_fkey(*),
-        creditor:users!recurring_ious_creditor_id_fkey(*)
+        debtor:users!recurring_ious_debtor_id_fkey(id, username, first_name, profile_pic_url),
+        creditor:users!recurring_ious_creditor_id_fkey(id, username, first_name, profile_pic_url)
       `)
       .single()
 
