@@ -7,6 +7,9 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name VARCHAR(20);
 -- Add username_changed_at to track 30-day change limit
 ALTER TABLE users ADD COLUMN IF NOT EXISTS username_changed_at TIMESTAMP WITH TIME ZONE;
 
+-- Add setup_complete flag (used during user creation)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS setup_complete BOOLEAN DEFAULT false;
+
 -- Add profile_complete flag to track if user has completed onboarding
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_complete BOOLEAN DEFAULT false;
 

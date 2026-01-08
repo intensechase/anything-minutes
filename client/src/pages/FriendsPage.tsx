@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, UserPlus, Check, X, Users, FileText } from 'lucide-react'
+import { Search, UserPlus, Check, X, Users, FileText, HandCoins, Repeat } from 'lucide-react'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { User, Friendship } from '../types'
 import CreateIOUModal from '../components/CreateIOUModal'
+import CreateUOMeModal from '../components/CreateUOMeModal'
+import CreateRecurringModal from '../components/CreateRecurringModal'
 
 export default function FriendsPage() {
   const { user } = useAuth()
@@ -16,6 +18,7 @@ export default function FriendsPage() {
   const [isSearching, setIsSearching] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [selectedFriend, setSelectedFriend] = useState<User | null>(null)
+  const [modalType, setModalType] = useState<'iou' | 'uome' | 'recurring' | null>(null)
 
   const { data: friendsData, isLoading } = useQuery({
     queryKey: ['friends'],
@@ -304,16 +307,50 @@ export default function FriendsPage() {
                       </p>
                     )}
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (friend) setSelectedFriend(friend)
-                    }}
-                    className="flex items-center gap-1 bg-accent text-dark px-3 py-1.5 rounded-lg text-sm hover:bg-accent/90 transition-colors"
-                  >
-                    <FileText className="w-4 h-4" />
-                    New IOU
-                  </button>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (friend) {
+                          setSelectedFriend(friend)
+                          setModalType('iou')
+                        }
+                      }}
+                      className="flex items-center gap-1 bg-accent text-dark px-2 py-1.5 rounded-lg text-xs hover:bg-accent/90 transition-colors"
+                      title="New IOU (you owe them)"
+                    >
+                      <FileText className="w-3 h-3" />
+                      IOU
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (friend) {
+                          setSelectedFriend(friend)
+                          setModalType('uome')
+                        }
+                      }}
+                      className="flex items-center gap-1 bg-card text-light px-2 py-1.5 rounded-lg text-xs hover:bg-card/80 transition-colors"
+                      title="New UOMe (they owe you)"
+                    >
+                      <HandCoins className="w-3 h-3" />
+                      UOMe
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (friend) {
+                          setSelectedFriend(friend)
+                          setModalType('recurring')
+                        }
+                      }}
+                      className="flex items-center gap-1 bg-card text-light px-2 py-1.5 rounded-lg text-xs hover:bg-card/80 transition-colors"
+                      title="New Recurring IOU"
+                    >
+                      <Repeat className="w-3 h-3" />
+                      Recurring
+                    </button>
+                  </div>
                 </div>
               )
             })}
@@ -330,9 +367,34 @@ export default function FriendsPage() {
       </div>
 
       {/* Create IOU Modal */}
-      {selectedFriend && (
+      {selectedFriend && modalType === 'iou' && (
         <CreateIOUModal
-          onClose={() => setSelectedFriend(null)}
+          onClose={() => {
+            setSelectedFriend(null)
+            setModalType(null)
+          }}
+          preselectedFriend={selectedFriend}
+        />
+      )}
+
+      {/* Create UOMe Modal */}
+      {selectedFriend && modalType === 'uome' && (
+        <CreateUOMeModal
+          onClose={() => {
+            setSelectedFriend(null)
+            setModalType(null)
+          }}
+          preselectedFriend={selectedFriend}
+        />
+      )}
+
+      {/* Create Recurring Modal */}
+      {selectedFriend && modalType === 'recurring' && (
+        <CreateRecurringModal
+          onClose={() => {
+            setSelectedFriend(null)
+            setModalType(null)
+          }}
           preselectedFriend={selectedFriend}
         />
       )}

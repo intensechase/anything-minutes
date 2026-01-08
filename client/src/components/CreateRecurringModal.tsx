@@ -6,6 +6,7 @@ import { User } from '../types'
 
 interface CreateRecurringModalProps {
   onClose: () => void
+  preselectedFriend?: User | null
 }
 
 const DAYS_OF_WEEK = [
@@ -18,11 +19,11 @@ const DAYS_OF_WEEK = [
   { value: 6, label: 'Saturday' },
 ]
 
-export default function CreateRecurringModal({ onClose }: CreateRecurringModalProps) {
+export default function CreateRecurringModal({ onClose, preselectedFriend }: CreateRecurringModalProps) {
   const queryClient = useQueryClient()
-  const [step, setStep] = useState<'friend' | 'details'>('friend')
+  const [step, setStep] = useState<'friend' | 'details'>(preselectedFriend ? 'details' : 'friend')
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedFriend, setSelectedFriend] = useState<User | null>(null)
+  const [selectedFriend, setSelectedFriend] = useState<User | null>(preselectedFriend || null)
   const [direction, setDirection] = useState<'uome' | 'iou'>('uome') // uome = they owe me, iou = I owe them
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
