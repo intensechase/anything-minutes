@@ -148,8 +148,11 @@ export default function ProfilePage() {
                 {profile?.first_name || profile?.username || 'Loading...'}
               </h1>
               <p className="text-light/50 text-sm">@{profile?.username}</p>
-              {profile?.email && (
+              {isOwnProfile && profile?.email && (
                 <p className="text-light/40 text-xs mt-1">{profile.email}</p>
+              )}
+              {isOwnProfile && profile?.phone && (
+                <p className="text-light/40 text-xs mt-1">{profile.phone}</p>
               )}
               <p className="text-light/40 text-xs mt-1">
                 Member since{' '}

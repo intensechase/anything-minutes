@@ -173,9 +173,6 @@ export default function FriendsPage() {
                   <div>
                     <p className="font-medium text-light">{result.first_name || result.username}</p>
                     <p className="text-xs text-light/40">@{result.username}</p>
-                    {result.email && (
-                      <p className="text-sm text-light/50">{result.email}</p>
-                    )}
                   </div>
                 </div>
                 <button

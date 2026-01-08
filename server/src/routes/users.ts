@@ -21,10 +21,11 @@ router.get('/search', async (req: AuthenticatedRequest, res: Response): Promise<
   }
 
   try {
+    // Search by username, email, or first_name but don't return email/phone (privacy)
     const { data, error } = await supabase
       .from('users')
-      .select('id, username, email, profile_pic_url')
-      .or(`username.ilike.%${q}%,email.ilike.%${q}%`)
+      .select('id, username, first_name, profile_pic_url')
+      .or(`username.ilike.%${q}%,email.ilike.%${q}%,first_name.ilike.%${q}%`)
       .limit(20)
 
     if (error) throw error

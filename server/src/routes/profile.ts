@@ -224,14 +224,14 @@ router.get('/me', async (req: AuthenticatedRequest, res: Response): Promise<void
   }
 })
 
-// Get user profile by ID
+// Get user profile by ID (excludes email/phone for privacy)
 router.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { id } = req.params
 
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id, username, email, profile_pic_url, street_cred_visibility, created_at')
+      .select('id, username, first_name, profile_pic_url, street_cred_visibility, created_at')
       .eq('id', id)
       .single()
 
