@@ -173,7 +173,8 @@ export const api = {
   },
 
   async createRecurringIOU(recurring: {
-    debtor_id: string
+    debtor_id?: string    // For UOMe: friend is debtor (they owe me)
+    creditor_id?: string  // For IOU: friend is creditor (I owe them)
     description: string
     amount?: number
     visibility?: 'private' | 'public'

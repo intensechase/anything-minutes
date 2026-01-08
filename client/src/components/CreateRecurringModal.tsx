@@ -23,6 +23,7 @@ export default function CreateRecurringModal({ onClose }: CreateRecurringModalPr
   const [step, setStep] = useState<'friend' | 'details'>('friend')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFriend, setSelectedFriend] = useState<User | null>(null)
+  const [direction, setDirection] = useState<'uome' | 'iou'>('uome') // uome = they owe me, iou = I owe them
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
   const [notes, setNotes] = useState('')
@@ -49,7 +50,9 @@ export default function CreateRecurringModal({ onClose }: CreateRecurringModalPr
   const createMutation = useMutation({
     mutationFn: () =>
       api.createRecurringIOU({
-        debtor_id: selectedFriend!.id,
+        // If UOMe: friend is debtor (they owe me). If IOU: friend is creditor (I owe them)
+        debtor_id: direction === 'uome' ? selectedFriend!.id : undefined,
+        creditor_id: direction === 'iou' ? selectedFriend!.id : undefined,
         description,
         visibility,
         notes: notes || undefined,
@@ -160,7 +163,9 @@ export default function CreateRecurringModal({ onClose }: CreateRecurringModalPr
                   {selectedFriend?.username[0].toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-light/50">Owes you (recurring)</p>
+                  <p className="text-sm text-light/50">
+                    {direction === 'uome' ? 'Owes you (recurring)' : 'You owe (recurring)'}
+                  </p>
                   <p className="font-medium text-light">{selectedFriend?.username}</p>
                 </div>
                 <button
@@ -172,16 +177,47 @@ export default function CreateRecurringModal({ onClose }: CreateRecurringModalPr
                 </button>
               </div>
 
+              {/* Direction Toggle */}
+              <div>
+                <label className="block text-sm font-medium text-light mb-2">
+                  Direction
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDirection('uome')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                      direction === 'uome'
+                        ? 'bg-accent text-dark'
+                        : 'bg-dark text-light/70 hover:bg-dark/70'
+                    }`}
+                  >
+                    They owe me
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDirection('iou')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                      direction === 'iou'
+                        ? 'bg-accent text-dark'
+                        : 'bg-dark text-light/70 hover:bg-dark/70'
+                    }`}
+                  >
+                    I owe them
+                  </button>
+                </div>
+              </div>
+
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-light mb-1">
-                  What do they owe you? *
+                  {direction === 'uome' ? 'What do they owe you?' : 'What do you owe them?'} *
                 </label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g., Weekly allowance, Monthly rent contribution"
+                  placeholder={direction === 'uome' ? 'e.g., Weekly allowance, Monthly rent contribution' : 'e.g., Weekly payment, Monthly subscription'}
                   className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/40"
                   required
                 />

@@ -65,18 +65,25 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
   }
 })
 
-// Create recurring IOU (creditor creates - they are owed)
+// Create recurring IOU (supports both directions)
+// - If debtor_id provided: UOMe (they owe me) - current user is creditor
+// - If creditor_id provided: IOU (I owe them) - current user is debtor
 router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
-  const { debtor_id, description, amount, visibility, notes, frequency, day_of_week, day_of_month } = req.body
+  const { debtor_id, creditor_id, description, amount, visibility, notes, frequency, day_of_week, day_of_month } = req.body
 
-  if (!debtor_id || !description || !frequency) {
+  if ((!debtor_id && !creditor_id) || !description || !frequency) {
     res.status(400).json({
       success: false,
-      error: { code: 'BAD_REQUEST', message: 'debtor_id, description, and frequency are required' },
+      error: { code: 'BAD_REQUEST', message: 'debtor_id or creditor_id, description, and frequency are required' },
     })
     return
   }
+
+  // Determine the other party and direction
+  const finalDebtorId = debtor_id || userId  // If no debtor_id, current user is debtor
+  const finalCreditorId = creditor_id || userId  // If no creditor_id, current user is creditor
+  const otherPartyId = debtor_id || creditor_id  // The friend we're creating this with
 
   if (frequency === 'weekly' && (day_of_week === undefined || day_of_week < 0 || day_of_week > 6)) {
     res.status(400).json({
@@ -100,7 +107,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
       .from('friendships')
       .select('*')
       .or(
-        `and(requester_id.eq.${userId},addressee_id.eq.${debtor_id}),and(requester_id.eq.${debtor_id},addressee_id.eq.${userId})`
+        `and(requester_id.eq.${userId},addressee_id.eq.${otherPartyId}),and(requester_id.eq.${otherPartyId},addressee_id.eq.${userId})`
       )
       .eq('status', 'accepted')
       .single()
@@ -118,8 +125,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
     const { data, error } = await supabase
       .from('recurring_ious')
       .insert({
-        debtor_id,
-        creditor_id: userId,
+        debtor_id: finalDebtorId,
+        creditor_id: finalCreditorId,
         created_by: userId,
         description,
         amount: amount || null,
