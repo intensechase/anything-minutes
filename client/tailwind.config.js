@@ -8,6 +8,7 @@ export default {
     fontFamily: {
       'sans': ['Inter', 'system-ui', 'sans-serif'],
       'display': ['"Bebas Neue"', 'sans-serif'],
+      'menu': ['Quicksand', 'sans-serif'],
     },
     extend: {
       colors: {
