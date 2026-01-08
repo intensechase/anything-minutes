@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import { useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
@@ -58,31 +59,34 @@ function SetupRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/setup"
-        element={
-          <SetupRoute>
-            <SetupPage />
-          </SetupRoute>
-        }
-      />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<HomePage />} />
-        <Route path="feed" element={<FeedPage />} />
-        <Route path="debts" element={<DebtsPage />} />
-        <Route path="friends" element={<FriendsPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="profile/:userId" element={<ProfilePage />} />
-      </Route>
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/setup"
+          element={
+            <SetupRoute>
+              <SetupPage />
+            </SetupRoute>
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<HomePage />} />
+          <Route path="feed" element={<FeedPage />} />
+          <Route path="debts" element={<DebtsPage />} />
+          <Route path="friends" element={<FriendsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile/:userId" element={<ProfilePage />} />
+        </Route>
+      </Routes>
+      <Analytics />
+    </>
   )
 }
