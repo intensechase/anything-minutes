@@ -8,6 +8,7 @@ export default {
     extend: {
       fontFamily: {
         'display': ['"Bebas Neue"', 'sans-serif'],
+        'sans': ['"Bebas Neue"', 'sans-serif'],
       },
       colors: {
         // New dark theme palette
