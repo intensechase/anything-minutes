@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { auth } from './firebase'
-import { User, Friendship, IOU, StreetCred, ApiResponse, FeedItem, Payment, RecurringIOU } from '../types'
+import { User, Friendship, IOU, StreetCred, ApiResponse, FeedItem, Payment, RecurringIOU, BlockedUser } from '../types'
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api',
@@ -218,6 +218,27 @@ export const api = {
 
   async generateRecurringIOUs(): Promise<ApiResponse<{ generated_count: number; generated: IOU[] }>> {
     const { data } = await apiClient.post('/recurring/generate')
+    return data
+  },
+
+  // Blocking
+  async getBlockedUsers(): Promise<ApiResponse<BlockedUser[]>> {
+    const { data } = await apiClient.get('/blocked')
+    return data
+  },
+
+  async blockUser(userId: string): Promise<ApiResponse<BlockedUser>> {
+    const { data } = await apiClient.post(`/blocked/${userId}`)
+    return data
+  },
+
+  async unblockUser(userId: string): Promise<ApiResponse<void>> {
+    const { data } = await apiClient.delete(`/blocked/${userId}`)
+    return data
+  },
+
+  async checkBlocked(userId: string): Promise<ApiResponse<{ isBlocked: boolean }>> {
+    const { data } = await apiClient.get(`/blocked/check/${userId}`)
     return data
   },
 }

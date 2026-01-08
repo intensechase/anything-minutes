@@ -257,7 +257,20 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
 // Update profile settings
 router.put('/settings', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
-  const { street_cred_visibility, username, feed_visible, first_name } = req.body
+  const {
+    street_cred_visibility,
+    username,
+    feed_visible,
+    first_name,
+    venmo_handle,
+    friend_request_setting,
+    profile_visibility,
+    hide_from_search,
+    default_iou_visibility,
+    default_currency,
+    date_format,
+    time_format
+  } = req.body
 
   try {
     // Get current user data for username change check
@@ -297,6 +310,99 @@ router.put('/settings', async (req: AuthenticatedRequest, res: Response): Promis
         return
       }
       updates.first_name = capitalizeFirstName(trimmedFirstName)
+    }
+
+    // Handle venmo handle
+    if (venmo_handle !== undefined) {
+      // Clean up venmo handle (remove @ if present)
+      const cleanedHandle = venmo_handle.trim().replace(/^@/, '')
+      if (cleanedHandle.length > 50) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Venmo handle too long' },
+        })
+        return
+      }
+      updates.venmo_handle = cleanedHandle || null
+    }
+
+    // Handle friend request setting
+    if (friend_request_setting) {
+      if (!['everyone', 'friends_of_friends', 'no_one'].includes(friend_request_setting)) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Invalid friend request setting' },
+        })
+        return
+      }
+      updates.friend_request_setting = friend_request_setting
+    }
+
+    // Handle profile visibility
+    if (profile_visibility) {
+      if (!['everyone', 'friends_only'].includes(profile_visibility)) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Invalid profile visibility setting' },
+        })
+        return
+      }
+      updates.profile_visibility = profile_visibility
+    }
+
+    // Handle hide from search
+    if (typeof hide_from_search === 'boolean') {
+      updates.hide_from_search = hide_from_search
+    }
+
+    // Handle default IOU visibility
+    if (default_iou_visibility) {
+      if (!['private', 'public'].includes(default_iou_visibility)) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Invalid default IOU visibility' },
+        })
+        return
+      }
+      updates.default_iou_visibility = default_iou_visibility
+    }
+
+    // Handle default currency
+    if (default_currency) {
+      const validCurrencies = ['$', '🍺', '☕', '🍌', '🥤']
+      if (!validCurrencies.includes(default_currency)) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Invalid currency' },
+        })
+        return
+      }
+      updates.default_currency = default_currency
+    }
+
+    // Handle date format
+    if (date_format) {
+      const validFormats = ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']
+      if (!validFormats.includes(date_format)) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Invalid date format' },
+        })
+        return
+      }
+      updates.date_format = date_format
+    }
+
+    // Handle time format
+    if (time_format) {
+      if (!['12h', '24h'].includes(time_format)) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: 'Invalid time format' },
+        })
+        return
+      }
+      updates.time_format = time_format
     }
 
     if (username) {

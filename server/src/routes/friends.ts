@@ -124,7 +124,71 @@ router.post('/request', async (req: AuthenticatedRequest, res: Response): Promis
     return
   }
 
+  if (userId === addressee_id) {
+    res.status(400).json({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: 'You cannot send a friend request to yourself' },
+    })
+    return
+  }
+
   try {
+    // Check if either user has blocked the other
+    const { data: blockExists } = await supabase
+      .from('blocked_users')
+      .select('id')
+      .or(
+        `and(blocker_id.eq.${userId},blocked_id.eq.${addressee_id}),and(blocker_id.eq.${addressee_id},blocked_id.eq.${userId})`
+      )
+      .single()
+
+    if (blockExists) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'BLOCKED', message: 'Unable to send friend request' },
+      })
+      return
+    }
+
+    // Check addressee's friend request setting
+    const { data: addressee } = await supabase
+      .from('users')
+      .select('friend_request_setting')
+      .eq('id', addressee_id)
+      .single()
+
+    if (!addressee) {
+      res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'User not found' },
+      })
+      return
+    }
+
+    if (addressee.friend_request_setting === 'no_one') {
+      res.status(400).json({
+        success: false,
+        error: { code: 'REQUESTS_DISABLED', message: 'This user is not accepting friend requests' },
+      })
+      return
+    }
+
+    if (addressee.friend_request_setting === 'friends_of_friends') {
+      // Check if there's a mutual friend
+      const { data: mutualFriend } = await supabase.rpc('has_mutual_friend', {
+        user1: userId,
+        user2: addressee_id
+      })
+
+      if (!mutualFriend) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'NO_MUTUAL_FRIENDS', message: 'You need a mutual friend to send a request to this user' },
+        })
+        return
+      }
+    }
+
     // Check if friendship already exists
     const { data: existing } = await supabase
       .from('friendships')

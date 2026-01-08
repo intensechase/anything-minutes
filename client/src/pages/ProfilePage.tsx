@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LogOut, Settings, Award, Receipt, UserPlus, UserMinus, Clock, Check, X, FileText, Sun, Moon, Edit } from 'lucide-react'
+import { LogOut, Settings, Award, Receipt, UserPlus, UserMinus, Clock, Check, X, FileText, Sun, Moon, Edit, Shield, ChevronRight } from 'lucide-react'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -9,6 +9,7 @@ import { User } from '../types'
 import IOUCard from '../components/IOUCard'
 import CreateIOUModal from '../components/CreateIOUModal'
 import EditProfileModal from '../components/EditProfileModal'
+import BlockedUsersModal from '../components/BlockedUsersModal'
 
 export default function ProfilePage() {
   const { userId } = useParams()
@@ -18,6 +19,7 @@ export default function ProfilePage() {
   const [showSettings, setShowSettings] = useState(false)
   const [showCreateIOU, setShowCreateIOU] = useState(false)
   const [showEditProfile, setShowEditProfile] = useState(false)
+  const [showBlockedUsers, setShowBlockedUsers] = useState(false)
 
   const isOwnProfile = !userId || userId === user?.id
 
@@ -61,6 +63,13 @@ export default function ProfilePage() {
     },
   })
 
+  const settingsMutation = useMutation({
+    mutationFn: (updates: Partial<User>) => api.updateProfile(updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+    },
+  })
+
   // Friend action mutations
   const sendRequestMutation = useMutation({
     mutationFn: () => api.sendFriendRequest(userId!),
@@ -96,6 +105,15 @@ export default function ProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friendship-status', userId] })
       queryClient.invalidateQueries({ queryKey: ['friends'] })
+    },
+  })
+
+  const blockUserMutation = useMutation({
+    mutationFn: (blockUserId: string) => api.blockUser(blockUserId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friendship-status', userId] })
+      queryClient.invalidateQueries({ queryKey: ['friends'] })
+      queryClient.invalidateQueries({ queryKey: ['blocked-users'] })
     },
   })
 
@@ -254,6 +272,20 @@ export default function ProfilePage() {
                   </button>
                 </div>
               )}
+
+              {/* Block User - always available */}
+              <button
+                onClick={() => {
+                  if (confirm('Are you sure you want to block this user? They will be removed from your friends and won\'t be able to contact you.')) {
+                    blockUserMutation.mutate(userId!)
+                  }
+                }}
+                disabled={blockUserMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2 bg-dark text-danger/70 rounded-lg font-medium hover:bg-danger/20 transition-colors disabled:opacity-50 text-sm"
+              >
+                <Shield className="w-4 h-4" />
+                {blockUserMutation.isPending ? 'Blocking...' : 'Block User'}
+              </button>
             </div>
           )}
         </div>
@@ -264,79 +296,293 @@ export default function ProfilePage() {
         <div className="bg-card rounded-xl p-4 space-y-6">
           <h2 className="text-lg font-semibold text-light">Settings</h2>
 
-          {/* Street Cred Visibility */}
+          {/* Venmo Handle */}
           <div>
             <label className="block text-sm font-medium text-light mb-2">
-              Street Cred Visibility
+              Venmo Handle
             </label>
+            <p className="text-xs text-light/50 mb-2">
+              Your friends can use this to pay you back easily.
+            </p>
             <div className="flex gap-2">
-              {(['private', 'friends_only', 'public'] as const).map((option) => (
-                <button
-                  key={option}
-                  onClick={() => updateMutation.mutate(option)}
-                  disabled={updateMutation.isPending}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    profile?.street_cred_visibility === option
-                      ? 'bg-accent text-dark'
-                      : 'bg-dark text-light/70 hover:bg-dark/70'
-                  }`}
-                >
-                  {option === 'friends_only' ? 'Friends Only' : option.charAt(0).toUpperCase() + option.slice(1)}
-                </button>
-              ))}
+              <input
+                type="text"
+                placeholder="@your-venmo"
+                defaultValue={profile?.venmo_handle || ''}
+                className="flex-1 bg-dark border border-light/20 rounded-lg px-3 py-2 text-sm text-light placeholder:text-light/40 focus:outline-none focus:border-accent"
+                onBlur={(e) => {
+                  const value = e.target.value.trim().replace(/^@/, '')
+                  if (value !== (profile?.venmo_handle || '')) {
+                    settingsMutation.mutate({ venmo_handle: value })
+                  }
+                }}
+              />
             </div>
           </div>
 
-          {/* Feed Visibility Toggle */}
-          <div>
-            <label className="block text-sm font-medium text-light mb-2">
-              Feed Visibility
-            </label>
-            <p className="text-xs text-light/50 mb-3">
-              When enabled, you can see your friends' public activity and your public activity will appear in their feeds.
-            </p>
-            <button
-              onClick={() => feedVisibleMutation.mutate(!profile?.feed_visible)}
-              disabled={feedVisibleMutation.isPending}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                profile?.feed_visible ? 'bg-accent' : 'bg-dark'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-light transition-transform ${
-                  profile?.feed_visible ? 'translate-x-6' : 'translate-x-1'
+          {/* Privacy Settings Section */}
+          <div className="border-t border-light/10 pt-4">
+            <h3 className="text-sm font-semibold text-light/70 mb-4 uppercase tracking-wide">Privacy</h3>
+
+            {/* Street Cred Visibility */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light mb-2">
+                Street Cred Visibility
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(['private', 'friends_only', 'public'] as const).map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => updateMutation.mutate(option)}
+                    disabled={updateMutation.isPending}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      profile?.street_cred_visibility === option
+                        ? 'bg-accent text-dark'
+                        : 'bg-dark text-light/70 hover:bg-dark/70'
+                    }`}
+                  >
+                    {option === 'friends_only' ? 'Friends Only' : option.charAt(0).toUpperCase() + option.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Profile Visibility */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light mb-2">
+                Profile Visibility
+              </label>
+              <p className="text-xs text-light/50 mb-2">
+                Who can view your full profile.
+              </p>
+              <div className="flex gap-2">
+                {(['everyone', 'friends_only'] as const).map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => settingsMutation.mutate({ profile_visibility: option })}
+                    disabled={settingsMutation.isPending}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      profile?.profile_visibility === option
+                        ? 'bg-accent text-dark'
+                        : 'bg-dark text-light/70 hover:bg-dark/70'
+                    }`}
+                  >
+                    {option === 'friends_only' ? 'Friends Only' : 'Everyone'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Friend Request Setting */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light mb-2">
+                Who Can Send Friend Requests
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(['everyone', 'friends_of_friends', 'no_one'] as const).map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => settingsMutation.mutate({ friend_request_setting: option })}
+                    disabled={settingsMutation.isPending}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      profile?.friend_request_setting === option
+                        ? 'bg-accent text-dark'
+                        : 'bg-dark text-light/70 hover:bg-dark/70'
+                    }`}
+                  >
+                    {option === 'friends_of_friends' ? 'Friends of Friends' : option === 'no_one' ? 'No One' : 'Everyone'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Hide from Search */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light mb-2">
+                Hide from Search
+              </label>
+              <p className="text-xs text-light/50 mb-2">
+                When enabled, others won't find you when searching.
+              </p>
+              <button
+                onClick={() => settingsMutation.mutate({ hide_from_search: !profile?.hide_from_search })}
+                disabled={settingsMutation.isPending}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  profile?.hide_from_search ? 'bg-accent' : 'bg-dark'
                 }`}
-              />
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-light transition-transform ${
+                    profile?.hide_from_search ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className="ml-3 text-sm text-light/70">
+                {profile?.hide_from_search ? 'Hidden' : 'Visible'}
+              </span>
+            </div>
+
+            {/* Feed Visibility Toggle */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light mb-2">
+                Feed Visibility
+              </label>
+              <p className="text-xs text-light/50 mb-2">
+                When enabled, you can see your friends' public activity and your public activity will appear in their feeds.
+              </p>
+              <button
+                onClick={() => feedVisibleMutation.mutate(!profile?.feed_visible)}
+                disabled={feedVisibleMutation.isPending}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  profile?.feed_visible ? 'bg-accent' : 'bg-dark'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-light transition-transform ${
+                    profile?.feed_visible ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className="ml-3 text-sm text-light/70">
+                {profile?.feed_visible ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+
+            {/* Blocked Users */}
+            <button
+              onClick={() => setShowBlockedUsers(true)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-dark rounded-lg hover:bg-dark/70 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 text-light/70" />
+                <span className="text-sm text-light">Blocked Users</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-light/50" />
             </button>
-            <span className="ml-3 text-sm text-light/70">
-              {profile?.feed_visible ? 'Enabled' : 'Disabled'}
-            </span>
           </div>
 
-          {/* Theme Toggle */}
-          <div>
-            <label className="block text-sm font-medium text-light mb-2">
-              Theme
-            </label>
-            <p className="text-xs text-light/50 mb-3">
-              Switch between dark and light mode.
-            </p>
-            <button
-              onClick={toggleTheme}
-              className="flex items-center gap-3 px-4 py-2 bg-dark rounded-lg hover:bg-dark/70 transition-colors"
-            >
-              {theme === 'dark' ? (
-                <>
-                  <Moon className="w-5 h-5 text-accent" />
-                  <span className="text-sm text-light">Dark Mode</span>
-                </>
-              ) : (
-                <>
-                  <Sun className="w-5 h-5 text-warning" />
-                  <span className="text-sm text-light">Light Mode</span>
-                </>
-              )}
-            </button>
+          {/* Preferences Section */}
+          <div className="border-t border-light/10 pt-4">
+            <h3 className="text-sm font-semibold text-light/70 mb-4 uppercase tracking-wide">Preferences</h3>
+
+            {/* Default IOU Visibility */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light mb-2">
+                Default IOU Visibility
+              </label>
+              <p className="text-xs text-light/50 mb-2">
+                Default visibility when creating new IOUs.
+              </p>
+              <div className="flex gap-2">
+                {(['private', 'public'] as const).map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => settingsMutation.mutate({ default_iou_visibility: option })}
+                    disabled={settingsMutation.isPending}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      profile?.default_iou_visibility === option
+                        ? 'bg-accent text-dark'
+                        : 'bg-dark text-light/70 hover:bg-dark/70'
+                    }`}
+                  >
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Default Currency */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light mb-2">
+                Default Currency
+              </label>
+              <div className="flex gap-2">
+                {(['$', '🍺', '☕', '🍌', '🥤'] as const).map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => settingsMutation.mutate({ default_currency: option })}
+                    disabled={settingsMutation.isPending}
+                    className={`px-4 py-2 rounded-lg text-lg font-medium transition-colors ${
+                      profile?.default_currency === option
+                        ? 'bg-accent text-dark'
+                        : 'bg-dark text-light/70 hover:bg-dark/70'
+                    }`}
+                    title={option === '$' ? 'Dollar' : option === '🍺' ? 'Beer' : option === '☕' ? 'Coffee' : option === '🍌' ? 'Banana' : 'Soda'}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Date Format */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light mb-2">
+                Date Format
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'] as const).map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => settingsMutation.mutate({ date_format: option })}
+                    disabled={settingsMutation.isPending}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      profile?.date_format === option
+                        ? 'bg-accent text-dark'
+                        : 'bg-dark text-light/70 hover:bg-dark/70'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Time Format */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light mb-2">
+                Time Format
+              </label>
+              <div className="flex gap-2">
+                {(['12h', '24h'] as const).map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => settingsMutation.mutate({ time_format: option })}
+                    disabled={settingsMutation.isPending}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      profile?.time_format === option
+                        ? 'bg-accent text-dark'
+                        : 'bg-dark text-light/70 hover:bg-dark/70'
+                    }`}
+                  >
+                    {option === '12h' ? '12-hour' : '24-hour'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Theme Toggle */}
+            <div>
+              <label className="block text-sm font-medium text-light mb-2">
+                Theme
+              </label>
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-3 px-4 py-2 bg-dark rounded-lg hover:bg-dark/70 transition-colors"
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <Moon className="w-5 h-5 text-accent" />
+                    <span className="text-sm text-light">Dark Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Sun className="w-5 h-5 text-warning" />
+                    <span className="text-sm text-light">Light Mode</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -477,6 +723,11 @@ export default function ProfilePage() {
       {/* Edit Profile Modal */}
       {showEditProfile && (
         <EditProfileModal onClose={() => setShowEditProfile(false)} />
+      )}
+
+      {/* Blocked Users Modal */}
+      {showBlockedUsers && (
+        <BlockedUsersModal onClose={() => setShowBlockedUsers(false)} />
       )}
     </div>
   )
