@@ -24,8 +24,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />
   }
 
-  // Redirect to setup if user hasn't completed setup
-  if (user && !user.setup_complete) {
+  // Redirect to setup if user hasn't completed setup or profile
+  // This handles both new users and existing users missing first_name
+  if (user && (!user.setup_complete || !user.profile_complete || !user.first_name)) {
     return <Navigate to="/setup" replace />
   }
 
@@ -47,8 +48,8 @@ function SetupRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />
   }
 
-  // If setup is already complete, go to home
-  if (user && user.setup_complete) {
+  // If profile is fully complete (has first_name), go to home
+  if (user && user.setup_complete && user.profile_complete && user.first_name) {
     return <Navigate to="/" replace />
   }
 

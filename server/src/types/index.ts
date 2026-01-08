@@ -4,12 +4,17 @@ export interface User {
   id: string
   firebase_uid: string
   username: string
+  first_name?: string
   email?: string
   phone?: string
   profile_pic_url?: string
   street_cred_visibility: 'private' | 'friends_only' | 'public'
   feed_visible: boolean
   setup_complete: boolean
+  profile_complete: boolean
+  email_verified: boolean
+  phone_verified: boolean
+  username_changed_at?: string
   created_at: string
 }
 

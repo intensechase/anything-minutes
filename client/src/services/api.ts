@@ -43,6 +43,16 @@ export const api = {
     return data
   },
 
+  async completeProfile(profile: { first_name: string; username: string }): Promise<ApiResponse<User>> {
+    const { data } = await apiClient.post('/profile/complete', profile)
+    return data
+  },
+
+  async checkUsername(username: string): Promise<ApiResponse<{ available: boolean; error?: string; suggestions?: string[] }>> {
+    const { data } = await apiClient.get(`/profile/check-username/${encodeURIComponent(username)}`)
+    return data
+  },
+
   async getStreetCred(userId: string): Promise<ApiResponse<StreetCred>> {
     const { data } = await apiClient.get(`/profile/${userId}/street-cred`)
     return data

@@ -8,6 +8,192 @@ const router = Router()
 // All routes require authentication
 router.use(authMiddleware)
 
+// Helper to validate username format
+const isValidUsername = (username: string): { valid: boolean; error?: string } => {
+  if (username.length < 3 || username.length > 20) {
+    return { valid: false, error: 'Username must be 3-20 characters' }
+  }
+  if (!/^[a-z0-9_.]+$/.test(username)) {
+    return { valid: false, error: 'Username can only contain lowercase letters, numbers, periods, and underscores' }
+  }
+  if (username.startsWith('.') || username.endsWith('.') || username.includes('..')) {
+    return { valid: false, error: 'Username cannot start or end with a period, or have consecutive periods' }
+  }
+  return { valid: true }
+}
+
+// Helper to validate first name format
+const isValidFirstName = (firstName: string): { valid: boolean; error?: string } => {
+  if (firstName.length < 1 || firstName.length > 20) {
+    return { valid: false, error: 'First name must be 1-20 characters' }
+  }
+  // Allow letters including accented characters
+  if (!/^[\p{L}]+$/u.test(firstName)) {
+    return { valid: false, error: 'First name can only contain letters' }
+  }
+  return { valid: true }
+}
+
+// Helper to capitalize first letter
+const capitalizeFirstName = (name: string): string => {
+  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
+}
+
+// Helper to generate username suggestions
+const generateUsernameSuggestions = async (baseUsername: string): Promise<string[]> => {
+  const suggestions: string[] = []
+  const variations = [
+    `${baseUsername}1`,
+    `${baseUsername}2`,
+    `${baseUsername}_1`,
+    `${baseUsername}_2`,
+    `${baseUsername}${Math.floor(Math.random() * 100)}`,
+    `${baseUsername}${Math.floor(Math.random() * 1000)}`,
+    `${baseUsername}.1`,
+    `${baseUsername}.2`,
+  ]
+
+  // Check which ones are available
+  for (const variation of variations) {
+    if (suggestions.length >= 3) break
+    const { data } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', variation)
+      .single()
+    if (!data) {
+      suggestions.push(variation)
+    }
+  }
+
+  return suggestions
+}
+
+// Check if username is available
+router.get('/check-username/:username', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const { username } = req.params
+  const userId = req.user!.userId
+  const trimmedUsername = username.trim().toLowerCase()
+
+  // Validate format
+  const validation = isValidUsername(trimmedUsername)
+  if (!validation.valid) {
+    res.json({
+      success: true,
+      data: { available: false, error: validation.error, suggestions: [] }
+    })
+    return
+  }
+
+  try {
+    // Check if taken
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', trimmedUsername)
+      .neq('id', userId)
+      .single()
+
+    if (existingUser) {
+      const suggestions = await generateUsernameSuggestions(trimmedUsername)
+      res.json({
+        success: true,
+        data: { available: false, error: 'Username is already taken', suggestions }
+      })
+      return
+    }
+
+    res.json({
+      success: true,
+      data: { available: true }
+    })
+  } catch (error) {
+    console.error('Check username error:', error)
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'Failed to check username' }
+    })
+  }
+})
+
+// Complete profile (for new users and existing users missing first_name)
+router.post('/complete', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const userId = req.user!.userId
+  const { first_name, username } = req.body
+
+  if (!first_name || !username) {
+    res.status(400).json({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: 'First name and username are required' }
+    })
+    return
+  }
+
+  // Validate first name
+  const firstNameValidation = isValidFirstName(first_name.trim())
+  if (!firstNameValidation.valid) {
+    res.status(400).json({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: firstNameValidation.error }
+    })
+    return
+  }
+
+  // Validate username
+  const trimmedUsername = username.trim().toLowerCase()
+  const usernameValidation = isValidUsername(trimmedUsername)
+  if (!usernameValidation.valid) {
+    res.status(400).json({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: usernameValidation.error }
+    })
+    return
+  }
+
+  try {
+    // Check if username is taken
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', trimmedUsername)
+      .neq('id', userId)
+      .single()
+
+    if (existingUser) {
+      const suggestions = await generateUsernameSuggestions(trimmedUsername)
+      res.status(400).json({
+        success: false,
+        error: { code: 'USERNAME_TAKEN', message: 'Username is already taken', suggestions }
+      })
+      return
+    }
+
+    // Update user profile
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        first_name: capitalizeFirstName(first_name.trim()),
+        username: trimmedUsername,
+        profile_complete: true,
+        setup_complete: true,
+        username_changed_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    res.json({ success: true, data })
+  } catch (error) {
+    console.error('Complete profile error:', error)
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'Failed to complete profile' }
+    })
+  }
+})
+
 // Get current user's profile
 router.get('/me', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
@@ -71,9 +257,16 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
 // Update profile settings
 router.put('/settings', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
-  const { street_cred_visibility, username, feed_visible } = req.body
+  const { street_cred_visibility, username, feed_visible, first_name } = req.body
 
   try {
+    // Get current user data for username change check
+    const { data: currentUser } = await supabase
+      .from('users')
+      .select('username, username_changed_at')
+      .eq('id', userId)
+      .single()
+
     const updates: Record<string, unknown> = {}
 
     if (street_cred_visibility) {
@@ -92,41 +285,74 @@ router.put('/settings', async (req: AuthenticatedRequest, res: Response): Promis
       updates.feed_visible = feed_visible
     }
 
+    // Handle first name update
+    if (first_name !== undefined) {
+      const trimmedFirstName = first_name.trim()
+      const validation = isValidFirstName(trimmedFirstName)
+      if (!validation.valid) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'BAD_REQUEST', message: validation.error },
+        })
+        return
+      }
+      updates.first_name = capitalizeFirstName(trimmedFirstName)
+    }
+
     if (username) {
       // Validate username format
       const trimmedUsername = username.trim().toLowerCase()
-      if (trimmedUsername.length < 3 || trimmedUsername.length > 20) {
+      const validation = isValidUsername(trimmedUsername)
+      if (!validation.valid) {
         res.status(400).json({
           success: false,
-          error: { code: 'BAD_REQUEST', message: 'Username must be 3-20 characters' },
-        })
-        return
-      }
-      if (!/^[a-z0-9_]+$/.test(trimmedUsername)) {
-        res.status(400).json({
-          success: false,
-          error: { code: 'BAD_REQUEST', message: 'Username can only contain letters, numbers, and underscores' },
+          error: { code: 'BAD_REQUEST', message: validation.error },
         })
         return
       }
 
-      // Check if username is already taken
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('username', trimmedUsername)
-        .neq('id', userId)
-        .single()
+      // Check if username is actually changing
+      if (currentUser && currentUser.username !== trimmedUsername) {
+        // Check 30-day limit
+        if (currentUser.username_changed_at) {
+          const lastChanged = new Date(currentUser.username_changed_at)
+          const thirtyDaysAgo = new Date()
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-      if (existingUser) {
-        res.status(400).json({
-          success: false,
-          error: { code: 'USERNAME_TAKEN', message: 'This alias is already taken' },
-        })
-        return
+          if (lastChanged > thirtyDaysAgo) {
+            const nextChangeDate = new Date(lastChanged)
+            nextChangeDate.setDate(nextChangeDate.getDate() + 30)
+            res.status(400).json({
+              success: false,
+              error: {
+                code: 'USERNAME_CHANGE_LIMIT',
+                message: `You can change your username again on ${nextChangeDate.toLocaleDateString()}`
+              },
+            })
+            return
+          }
+        }
+
+        // Check if username is already taken
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('username', trimmedUsername)
+          .neq('id', userId)
+          .single()
+
+        if (existingUser) {
+          const suggestions = await generateUsernameSuggestions(trimmedUsername)
+          res.status(400).json({
+            success: false,
+            error: { code: 'USERNAME_TAKEN', message: 'This username is already taken', suggestions },
+          })
+          return
+        }
+
+        updates.username = trimmedUsername
+        updates.username_changed_at = new Date().toISOString()
       }
-
-      updates.username = trimmedUsername
       updates.setup_complete = true
     }
 
