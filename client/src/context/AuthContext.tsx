@@ -4,8 +4,9 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   signOut as firebaseSignOut,
+  ConfirmationResult,
 } from 'firebase/auth'
-import { auth, googleProvider } from '../services/firebase'
+import { auth, googleProvider, setupRecaptcha, sendOTP, clearRecaptcha } from '../services/firebase'
 import { User } from '../types'
 import { api } from '../services/api'
 
@@ -14,6 +15,8 @@ interface AuthContextType {
   user: User | null
   loading: boolean
   signInWithGoogle: () => Promise<void>
+  sendPhoneOTP: (phoneNumber: string, buttonId: string) => Promise<void>
+  verifyPhoneOTP: (otp: string) => Promise<void>
   signOut: () => Promise<void>
   getIdToken: () => Promise<string | null>
   refreshUser: () => Promise<void>
@@ -25,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
@@ -62,6 +66,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const sendPhoneOTP = async (phoneNumber: string, buttonId: string) => {
+    try {
+      clearRecaptcha()
+      const recaptcha = setupRecaptcha(buttonId)
+      const result = await sendOTP(phoneNumber, recaptcha)
+      setConfirmationResult(result)
+    } catch (error) {
+      console.error('Phone OTP error:', error)
+      clearRecaptcha()
+      throw error
+    }
+  }
+
+  const verifyPhoneOTP = async (otp: string) => {
+    if (!confirmationResult) {
+      throw new Error('No confirmation result. Please request OTP first.')
+    }
+    try {
+      const result = await confirmationResult.confirm(otp)
+      const token = await result.user.getIdToken()
+
+      const response = await api.createOrGetUser(token)
+      if (response.success && response.data) {
+        setUser(response.data)
+      }
+      setConfirmationResult(null)
+      clearRecaptcha()
+    } catch (error) {
+      console.error('OTP verification error:', error)
+      throw error
+    }
+  }
+
   const signOut = async () => {
     await firebaseSignOut(auth)
     setUser(null)
@@ -94,6 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         loading,
         signInWithGoogle,
+        sendPhoneOTP,
+        verifyPhoneOTP,
         signOut,
         getIdToken,
         refreshUser,
