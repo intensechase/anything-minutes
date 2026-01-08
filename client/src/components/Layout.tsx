@@ -22,7 +22,7 @@ export default function Layout() {
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `text-lg font-semibold font-menu transition-colors ${
+                  `text-lg font-display tracking-wider transition-colors ${
                     isActive ? 'text-accent' : 'text-light/70 hover:text-light'
                   }`
                 }
@@ -53,7 +53,7 @@ export default function Layout() {
               }
             >
               <Icon className="w-7 h-7" />
-              <span className="text-base mt-1.5 font-semibold font-menu">{label}</span>
+              <span className="text-base mt-1.5 font-display tracking-wider">{label}</span>
             </NavLink>
           ))}
         </div>
