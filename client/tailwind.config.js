@@ -6,7 +6,7 @@ export default {
   ],
   theme: {
     fontFamily: {
-      'sans': ['"Bebas Neue"', 'sans-serif'],
+      'sans': ['Inter', 'system-ui', 'sans-serif'],
       'display': ['"Bebas Neue"', 'sans-serif'],
     },
     extend: {
