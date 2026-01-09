@@ -15,6 +15,9 @@ import blockingRoutes from './routes/blocking.js'
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Trust proxy (required for Railway/Vercel/etc. behind reverse proxy)
+app.set('trust proxy', 1)
+
 // Middleware
 app.use(helmet())
 
