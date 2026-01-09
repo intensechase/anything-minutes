@@ -5,6 +5,25 @@ import { AuthenticatedRequest } from '../types/index.js'
 
 const router = Router()
 
+// Amount validation helper
+const MAX_AMOUNT = 999999.99
+function validateAmount(amount: any): { valid: boolean; error?: string } {
+  if (amount === undefined || amount === null || amount === '') {
+    return { valid: true } // Optional field
+  }
+  const num = Number(amount)
+  if (!Number.isFinite(num)) {
+    return { valid: false, error: 'Amount must be a valid number' }
+  }
+  if (num < 0) {
+    return { valid: false, error: 'Amount cannot be negative' }
+  }
+  if (num > MAX_AMOUNT) {
+    return { valid: false, error: `Amount cannot exceed ${MAX_AMOUNT}` }
+  }
+  return { valid: true }
+}
+
 // All routes require authentication
 router.use(authMiddleware)
 
@@ -76,6 +95,16 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
     res.status(400).json({
       success: false,
       error: { code: 'BAD_REQUEST', message: 'debtor_id or creditor_id, description, and frequency are required' },
+    })
+    return
+  }
+
+  // Validate amount if provided
+  const amountValidation = validateAmount(amount)
+  if (!amountValidation.valid) {
+    res.status(400).json({
+      success: false,
+      error: { code: 'INVALID_AMOUNT', message: amountValidation.error },
     })
     return
   }
