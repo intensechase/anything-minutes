@@ -1,5 +1,6 @@
 import { Outlet, NavLink } from 'react-router-dom'
 import { Home, Receipt, Users, User, Rss } from 'lucide-react'
+import NotificationBell from './NotificationBell'
 
 const navItems = [
   { to: '/', icon: Home, label: 'Home' },
@@ -16,21 +17,32 @@ export default function Layout() {
       <header className="hidden md:block bg-card shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
           <h1 className="text-4xl font-display text-light tracking-wide">Anything Minutes</h1>
-          <nav className="flex gap-10">
-            {navItems.map(({ to, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `text-lg font-display tracking-wider transition-colors ${
-                    isActive ? 'text-accent' : 'text-light/70 hover:text-light'
-                  }`
-                }
-              >
-                {label}
-              </NavLink>
-            ))}
-          </nav>
+          <div className="flex items-center gap-8">
+            <nav className="flex gap-10">
+              {navItems.map(({ to, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `text-lg font-display tracking-wider transition-colors ${
+                      isActive ? 'text-accent' : 'text-light/70 hover:text-light'
+                    }`
+                  }
+                >
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+            <NotificationBell />
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Header */}
+      <header className="md:hidden sticky top-0 z-40 bg-card shadow-lg">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <h1 className="text-xl font-display text-light tracking-wide">Anything Minutes</h1>
+          <NotificationBell />
         </div>
       </header>
 

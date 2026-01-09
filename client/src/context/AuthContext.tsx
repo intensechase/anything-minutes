@@ -32,6 +32,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null)
 
+  // Handle pending invite after login
+  const handlePendingInvite = async () => {
+    const pendingToken = sessionStorage.getItem('pendingInviteToken')
+    if (pendingToken) {
+      try {
+        await api.acceptInvite(pendingToken)
+        sessionStorage.removeItem('pendingInviteToken')
+        // Redirect to debts page will happen naturally since they're logged in
+      } catch (error) {
+        console.error('Failed to accept pending invite:', error)
+        // Clear the token even if it fails (it may be expired or already claimed)
+        sessionStorage.removeItem('pendingInviteToken')
+      }
+    }
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser)
@@ -40,6 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const response = await api.getProfile()
           if (response.success && response.data) {
             setUser(response.data)
+            // Check for pending invite after successful login
+            handlePendingInvite()
           }
         } catch (error) {
           console.error('Failed to fetch user profile:', error)

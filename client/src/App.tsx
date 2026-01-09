@@ -8,6 +8,7 @@ import FeedPage from './pages/FeedPage'
 import DebtsPage from './pages/DebtsPage'
 import FriendsPage from './pages/FriendsPage'
 import ProfilePage from './pages/ProfilePage'
+import InvitePage from './pages/InvitePage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { firebaseUser, user, loading } = useAuth()
@@ -60,6 +61,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/invite/:token" element={<InvitePage />} />
       <Route
         path="/setup"
         element={

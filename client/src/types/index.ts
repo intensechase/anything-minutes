@@ -55,6 +55,7 @@ export interface IOU {
   created_by?: string  // Who created the IOU (for accept/decline permissions)
   description: string
   amount?: number  // Optional monetary amount
+  currency?: string  // Currency symbol or emoji
   status: 'pending' | 'active' | 'payment_pending' | 'paid' | 'cancelled'
   visibility: 'private' | 'public'
   due_date?: string
@@ -65,6 +66,7 @@ export interface IOU {
   creditor?: User
   payments?: Payment[]  // Payment history
   amount_paid?: number  // Calculated total paid
+  invite_id?: string  // If this IOU was created via invite
 }
 
 export interface Payment {

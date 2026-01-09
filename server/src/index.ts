@@ -11,6 +11,8 @@ import profileRoutes from './routes/profile.js'
 import feedRoutes from './routes/feed.js'
 import recurringRoutes from './routes/recurring.js'
 import blockingRoutes from './routes/blocking.js'
+import invitesRoutes from './routes/invites.js'
+import notificationsRoutes from './routes/notifications.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -74,6 +76,8 @@ app.use('/api/profile', profileRoutes)
 app.use('/api/feed', feedRoutes)
 app.use('/api/recurring', recurringRoutes)
 app.use('/api/blocked', blockingRoutes)
+app.use('/api/invites', invitesRoutes)
+app.use('/api/notifications', notificationsRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {

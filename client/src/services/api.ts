@@ -244,4 +244,65 @@ export const api = {
     const { data } = await apiClient.get(`/blocked/check/${userId}`)
     return data
   },
+
+  // Invites
+  async createInvite(invite: {
+    type: 'iou' | 'uome'
+    description: string
+    amount?: number
+    currency?: string
+    visibility?: 'private' | 'public'
+    due_date?: string
+    notes?: string
+    invitee_name?: string
+    invitee_phone?: string
+    invitee_email?: string
+  }): Promise<ApiResponse<{ invite: any; iou: IOU; invite_url: string }>> {
+    const { data } = await apiClient.post('/invites', invite)
+    return data
+  },
+
+  async getPendingInvites(): Promise<ApiResponse<any[]>> {
+    const { data } = await apiClient.get('/invites/pending')
+    return data
+  },
+
+  async getInviteByToken(token: string): Promise<ApiResponse<any>> {
+    const { data } = await apiClient.get(`/invites/${token}`)
+    return data
+  },
+
+  async acceptInvite(token: string): Promise<ApiResponse<IOU>> {
+    const { data } = await apiClient.post(`/invites/${token}/accept`)
+    return data
+  },
+
+  async declineInvite(token: string): Promise<ApiResponse<void>> {
+    const { data } = await apiClient.post(`/invites/${token}/decline`)
+    return data
+  },
+
+  // Notifications
+  async getNotifications(limit?: number, unreadOnly?: boolean): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams()
+    if (limit) params.append('limit', limit.toString())
+    if (unreadOnly) params.append('unread_only', 'true')
+    const { data } = await apiClient.get(`/notifications?${params}`)
+    return data
+  },
+
+  async getUnreadNotificationCount(): Promise<ApiResponse<{ count: number }>> {
+    const { data } = await apiClient.get('/notifications/unread-count')
+    return data
+  },
+
+  async markNotificationRead(id: string): Promise<ApiResponse<any>> {
+    const { data } = await apiClient.post(`/notifications/${id}/read`)
+    return data
+  },
+
+  async markAllNotificationsRead(): Promise<ApiResponse<void>> {
+    const { data } = await apiClient.post('/notifications/read-all')
+    return data
+  },
 }

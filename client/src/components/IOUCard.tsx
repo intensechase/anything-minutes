@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Clock, Check, X, DollarSign, Plus } from 'lucide-react'
+import { Clock, Check, X, DollarSign, Plus, Link } from 'lucide-react'
 import { formatDistanceToNow, isPast, format } from 'date-fns'
 import { IOU } from '../types'
 import { api } from '../services/api'
@@ -21,6 +21,8 @@ export default function IOUCard({ iou }: IOUCardProps) {
   const isDebtor = iou.debtor_id === user?.id
   const otherUser = isDebtor ? iou.creditor : iou.debtor
   const isOverdue = iou.due_date && isPast(new Date(iou.due_date)) && iou.status === 'active'
+  const isInvitePending = iou.invite_id && !otherUser
+  const currencySymbol = iou.currency || '$'
 
   // Calculate remaining balance
   const amountPaid = iou.amount_paid || 0
@@ -62,6 +64,7 @@ export default function IOUCard({ iou }: IOUCardProps) {
   }
 
   const getStatusColor = () => {
+    if (isInvitePending) return 'border-l-purple-500 bg-purple-500/10'
     if (isOverdue) return 'border-l-danger bg-danger/10'
     switch (iou.status) {
       case 'pending':
@@ -78,6 +81,14 @@ export default function IOUCard({ iou }: IOUCardProps) {
   }
 
   const getStatusBadge = () => {
+    if (isInvitePending) {
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-purple-500/10 text-purple-400 rounded-full flex items-center gap-1">
+          <Link className="w-3 h-3" />
+          Invite Sent
+        </span>
+      )
+    }
     if (isOverdue) {
       return (
         <span className="px-2 py-1 text-xs font-medium bg-danger/10 text-danger rounded-full">
@@ -130,13 +141,21 @@ export default function IOUCard({ iou }: IOUCardProps) {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-full bg-accent/30 flex items-center justify-center text-accent text-sm font-medium">
-                {(otherUser?.first_name?.[0] || otherUser?.username?.[0])?.toUpperCase() || '?'}
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                isInvitePending ? 'bg-purple-500/30 text-purple-400' : 'bg-accent/30 text-accent'
+              }`}>
+                {isInvitePending ? (
+                  <Link className="w-4 h-4" />
+                ) : (
+                  (otherUser?.first_name?.[0] || otherUser?.username?.[0])?.toUpperCase() || '?'
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium text-light">
                   {isDebtor ? 'You owe' : 'Owes you'}{' '}
-                  <span className="text-accent">{otherUser?.first_name || otherUser?.username || 'Unknown'}</span>
+                  <span className={isInvitePending ? 'text-purple-400' : 'text-accent'}>
+                    {isInvitePending ? 'Invited user' : (otherUser?.first_name || otherUser?.username || 'Unknown')}
+                  </span>
                 </p>
                 <p className="text-base font-semibold text-light">{iou.description}</p>
               </div>
@@ -146,17 +165,27 @@ export default function IOUCard({ iou }: IOUCardProps) {
             {iou.amount && (
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex items-center gap-1 text-sm">
-                  <DollarSign className="w-4 h-4 text-accent" />
-                  <span className="text-light font-medium">${iou.amount.toFixed(2)}</span>
+                  {currencySymbol === '$' ? (
+                    <DollarSign className="w-4 h-4 text-accent" />
+                  ) : (
+                    <span className="text-accent">{currencySymbol}</span>
+                  )}
+                  <span className="text-light font-medium">
+                    {currencySymbol === '$' ? `$${iou.amount.toFixed(2)}` : iou.amount}
+                  </span>
                 </div>
                 {amountPaid > 0 && (
                   <>
                     <span className="text-light/40">•</span>
-                    <span className="text-sm text-success">${amountPaid.toFixed(2)} paid</span>
+                    <span className="text-sm text-success">
+                      {currencySymbol === '$' ? `$${amountPaid.toFixed(2)}` : `${amountPaid} ${currencySymbol}`} paid
+                    </span>
                     {remaining !== null && remaining > 0 && (
                       <>
                         <span className="text-light/40">•</span>
-                        <span className="text-sm text-warning">${remaining.toFixed(2)} remaining</span>
+                        <span className="text-sm text-warning">
+                          {currencySymbol === '$' ? `$${remaining.toFixed(2)}` : `${remaining} ${currencySymbol}`} remaining
+                        </span>
                       </>
                     )}
                   </>
