@@ -6,6 +6,12 @@ import logger from '../utils/logger.js'
 
 const router = Router()
 
+// Strip sensitive fields from user object for API responses
+function sanitizeUser(user: Record<string, unknown>) {
+  const { email, phone, firebase_uid, ...safeFields } = user
+  return safeFields
+}
+
 // Login / Create user on first login
 router.post('/login', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const authHeader = req.headers.authorization
@@ -32,7 +38,7 @@ router.post('/login', async (req: AuthenticatedRequest, res: Response): Promise<
       .single()
 
     if (existingUser) {
-      res.json({ success: true, data: existingUser })
+      res.json({ success: true, data: sanitizeUser(existingUser) })
       return
     }
 
@@ -56,7 +62,7 @@ router.post('/login', async (req: AuthenticatedRequest, res: Response): Promise<
       throw error
     }
 
-    res.json({ success: true, data: newUser })
+    res.json({ success: true, data: sanitizeUser(newUser) })
   } catch (error) {
     logger.error('Login error', error)
     res.status(500).json({

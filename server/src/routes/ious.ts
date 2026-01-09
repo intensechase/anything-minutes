@@ -11,10 +11,14 @@ const router = Router()
 // All routes require authentication
 router.use(authMiddleware)
 
-// Get all IOUs for user
+// Get all IOUs for user (paginated)
 router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
-  const { filter } = req.query
+  const { filter, limit = '50', offset = '0' } = req.query
+
+  // Cap limit at 100 to prevent data dumps
+  const parsedLimit = Math.min(Number(limit) || 50, 100)
+  const parsedOffset = Number(offset) || 0
 
   try {
     let query = supabase
@@ -34,7 +38,9 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
       query = query.or(`debtor_id.eq.${userId},creditor_id.eq.${userId}`)
     }
 
-    query = query.order('created_at', { ascending: false })
+    query = query
+      .order('created_at', { ascending: false })
+      .range(parsedOffset, parsedOffset + parsedLimit - 1)
 
     const { data, error } = await query
 
