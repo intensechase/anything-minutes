@@ -1,5 +1,6 @@
 import { Router, Response, Request } from 'express'
 import crypto from 'crypto'
+import rateLimit from 'express-rate-limit'
 import { supabase } from '../services/supabase.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { AuthenticatedRequest } from '../types/index.js'
@@ -9,6 +10,18 @@ const router = Router()
 const MAX_PENDING_INVITES = 5
 const INVITE_EXPIRY_DAYS = 7
 const MAX_AMOUNT = 999999.99
+
+// Stricter rate limiting for public invite endpoints (prevent brute force)
+const inviteTokenLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // 20 requests per 15 minutes per IP
+  message: {
+    success: false,
+    error: { code: 'RATE_LIMITED', message: 'Too many requests. Please try again later.' }
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
 
 // Amount validation helper
 function validateAmount(amount: any): { valid: boolean; error?: string } {
@@ -194,8 +207,8 @@ router.get('/pending', authMiddleware, async (req: AuthenticatedRequest, res: Re
   }
 })
 
-// Get invite by token (PUBLIC - no auth required)
-router.get('/:token', async (req: Request, res: Response): Promise<void> => {
+// Get invite by token (PUBLIC - no auth required, rate limited)
+router.get('/:token', inviteTokenLimiter, async (req: Request, res: Response): Promise<void> => {
   const { token } = req.params
 
   try {
@@ -400,8 +413,8 @@ router.post('/:token/accept', authMiddleware, async (req: AuthenticatedRequest, 
   }
 })
 
-// Decline invite (PUBLIC - no auth required)
-router.post('/:token/decline', async (req: Request, res: Response): Promise<void> => {
+// Decline invite (PUBLIC - no auth required, rate limited)
+router.post('/:token/decline', inviteTokenLimiter, async (req: Request, res: Response): Promise<void> => {
   const { token } = req.params
 
   try {
