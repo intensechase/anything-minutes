@@ -2,6 +2,9 @@ import { Router, Response } from 'express'
 import { supabase } from '../services/supabase.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { AuthenticatedRequest } from '../types/index.js'
+import logger from '../utils/logger.js'
+import { userFriendshipsOrClause } from '../utils/friendships.js'
+import { DEFAULT_FEED_LIMIT } from '../utils/constants.js'
 
 const router = Router()
 
@@ -32,7 +35,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
     const { data: friendships } = await supabase
       .from('friendships')
       .select('requester_id, addressee_id')
-      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
+      .or(userFriendshipsOrClause(userId))
       .eq('status', 'accepted')
 
     const friendIds = (friendships || []).map((f) =>
@@ -55,7 +58,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
       .in('status', ['active', 'paid'])
       .or(`debtor_id.in.(${relevantUserIds.join(',')}),creditor_id.in.(${relevantUserIds.join(',')})`)
       .order('created_at', { ascending: false })
-      .limit(50)
+      .limit(DEFAULT_FEED_LIMIT)
 
     if (error) throw error
 
@@ -110,7 +113,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
 
     res.json({ success: true, data: feedItems })
   } catch (error) {
-    console.error('Get feed error:', error)
+    logger.error('Get feed error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch feed' },
@@ -151,7 +154,7 @@ router.post('/:iouId/react', async (req: AuthenticatedRequest, res: Response): P
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Add reaction error:', error)
+    logger.error('Add reaction error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to add reaction' },
@@ -175,7 +178,7 @@ router.delete('/:iouId/react', async (req: AuthenticatedRequest, res: Response):
 
     res.json({ success: true })
   } catch (error) {
-    console.error('Remove reaction error:', error)
+    logger.error('Remove reaction error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to remove reaction' },

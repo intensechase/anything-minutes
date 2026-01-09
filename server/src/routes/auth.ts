@@ -2,6 +2,7 @@ import { Router, Response } from 'express'
 import admin from 'firebase-admin'
 import { supabase } from '../services/supabase.js'
 import { AuthenticatedRequest } from '../types/index.js'
+import logger from '../utils/logger.js'
 
 const router = Router()
 
@@ -57,7 +58,7 @@ router.post('/login', async (req: AuthenticatedRequest, res: Response): Promise<
 
     res.json({ success: true, data: newUser })
   } catch (error) {
-    console.error('Login error:', error)
+    logger.error('Login error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to authenticate' },

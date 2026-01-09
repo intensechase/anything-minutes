@@ -2,6 +2,7 @@ import { Router, Response } from 'express'
 import { supabase } from '../services/supabase.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { AuthenticatedRequest } from '../types/index.js'
+import logger from '../utils/logger.js'
 
 const router = Router()
 
@@ -31,7 +32,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Get notifications error:', error)
+    logger.error('Get notifications error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch notifications' },
@@ -54,7 +55,7 @@ router.get('/unread-count', async (req: AuthenticatedRequest, res: Response): Pr
 
     res.json({ success: true, data: { count: count || 0 } })
   } catch (error) {
-    console.error('Get unread count error:', error)
+    logger.error('Get unread count error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch unread count' },
@@ -80,7 +81,7 @@ router.post('/:id/read', async (req: AuthenticatedRequest, res: Response): Promi
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Mark read error:', error)
+    logger.error('Mark read error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to mark notification as read' },
@@ -103,7 +104,7 @@ router.post('/read-all', async (req: AuthenticatedRequest, res: Response): Promi
 
     res.json({ success: true, message: 'All notifications marked as read' })
   } catch (error) {
-    console.error('Mark all read error:', error)
+    logger.error('Mark all read error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to mark notifications as read' },

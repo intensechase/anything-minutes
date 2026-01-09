@@ -1,28 +1,12 @@
 import { Router, Response } from 'express'
 import { supabase } from '../services/supabase.js'
 import { authMiddleware } from '../middleware/auth.js'
-import { AuthenticatedRequest } from '../types/index.js'
+import { AuthenticatedRequest, Payment } from '../types/index.js'
+import logger from '../utils/logger.js'
+import { getAcceptedFriendship } from '../utils/friendships.js'
+import { validateAmount } from '../utils/constants.js'
 
 const router = Router()
-
-// Amount validation helper
-const MAX_AMOUNT = 999999.99
-function validateAmount(amount: any): { valid: boolean; error?: string } {
-  if (amount === undefined || amount === null || amount === '') {
-    return { valid: true } // Optional field
-  }
-  const num = Number(amount)
-  if (!Number.isFinite(num)) {
-    return { valid: false, error: 'Amount must be a valid number' }
-  }
-  if (num < 0) {
-    return { valid: false, error: 'Amount cannot be negative' }
-  }
-  if (num > MAX_AMOUNT) {
-    return { valid: false, error: `Amount cannot exceed ${MAX_AMOUNT}` }
-  }
-  return { valid: true }
-}
 
 // All routes require authentication
 router.use(authMiddleware)
@@ -59,12 +43,12 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
     // Calculate amount_paid for each IOU
     const iousWithTotals = data?.map(iou => ({
       ...iou,
-      amount_paid: iou.payments?.reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0
+      amount_paid: iou.payments?.reduce((sum: number, p: Payment) => sum + (p.amount || 0), 0) || 0
     }))
 
     res.json({ success: true, data: iousWithTotals })
   } catch (error) {
-    console.error('Get IOUs error:', error)
+    logger.error('Get IOUs error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch IOUs' },
@@ -97,14 +81,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
 
   try {
     // Verify friendship exists
-    const { data: friendship } = await supabase
-      .from('friendships')
-      .select('*')
-      .or(
-        `and(requester_id.eq.${userId},addressee_id.eq.${creditor_id}),and(requester_id.eq.${creditor_id},addressee_id.eq.${userId})`
-      )
-      .eq('status', 'accepted')
-      .single()
+    const friendship = await getAcceptedFriendship(userId, creditor_id)
 
     if (!friendship) {
       res.status(400).json({
@@ -139,7 +116,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Create IOU error:', error)
+    logger.error('Create IOU error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to create IOU' },
@@ -172,14 +149,7 @@ router.post('/uome', async (req: AuthenticatedRequest, res: Response): Promise<v
 
   try {
     // Verify friendship exists
-    const { data: friendship } = await supabase
-      .from('friendships')
-      .select('*')
-      .or(
-        `and(requester_id.eq.${userId},addressee_id.eq.${debtor_id}),and(requester_id.eq.${debtor_id},addressee_id.eq.${userId})`
-      )
-      .eq('status', 'accepted')
-      .single()
+    const friendship = await getAcceptedFriendship(userId, debtor_id)
 
     if (!friendship) {
       res.status(400).json({
@@ -214,7 +184,7 @@ router.post('/uome', async (req: AuthenticatedRequest, res: Response): Promise<v
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Create UOMe error:', error)
+    logger.error('Create UOMe error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to create UOMe' },
@@ -287,7 +257,7 @@ router.post('/:id/payments', async (req: AuthenticatedRequest, res: Response): P
 
     res.json({ success: true, data: payment })
   } catch (error) {
-    console.error('Add payment error:', error)
+    logger.error('Add payment error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to add payment' },
@@ -344,7 +314,7 @@ router.post('/:id/accept', async (req: AuthenticatedRequest, res: Response): Pro
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Accept IOU error:', error)
+    logger.error('Accept IOU error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to accept IOU' },
@@ -397,7 +367,7 @@ router.post('/:id/decline', async (req: AuthenticatedRequest, res: Response): Pr
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Decline IOU error:', error)
+    logger.error('Decline IOU error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to decline IOU' },
@@ -438,7 +408,7 @@ router.post('/:id/mark-paid', async (req: AuthenticatedRequest, res: Response): 
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Mark paid error:', error)
+    logger.error('Mark paid error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to mark IOU as paid' },
@@ -464,7 +434,7 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response): Promise<
 
     res.json({ success: true })
   } catch (error) {
-    console.error('Cancel IOU error:', error)
+    logger.error('Cancel IOU error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to cancel IOU' },

@@ -2,6 +2,8 @@ import { Router, Response } from 'express'
 import { supabase } from '../services/supabase.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { AuthenticatedRequest } from '../types/index.js'
+import logger from '../utils/logger.js'
+import { friendshipOrClause, userFriendshipsOrClause, getFriendship } from '../utils/friendships.js'
 
 const router = Router()
 
@@ -14,15 +16,7 @@ router.get('/status/:userId', async (req: AuthenticatedRequest, res: Response): 
   const { userId } = req.params
 
   try {
-    const { data, error } = await supabase
-      .from('friendships')
-      .select('*')
-      .or(
-        `and(requester_id.eq.${currentUserId},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${currentUserId})`
-      )
-      .single()
-
-    if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows
+    const data = await getFriendship(currentUserId, userId)
 
     if (!data) {
       res.json({ success: true, data: { status: 'none' } })
@@ -49,7 +43,7 @@ router.get('/status/:userId', async (req: AuthenticatedRequest, res: Response): 
       },
     })
   } catch (error) {
-    console.error('Get friendship status error:', error)
+    logger.error('Get friendship status error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to get friendship status' },
@@ -69,14 +63,14 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
         requester:users!friendships_requester_id_fkey(id, username, first_name, profile_pic_url),
         addressee:users!friendships_addressee_id_fkey(id, username, first_name, profile_pic_url)
       `)
-      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
+      .or(userFriendshipsOrClause(userId))
       .eq('status', 'accepted')
 
     if (error) throw error
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Get friends error:', error)
+    logger.error('Get friends error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch friends' },
@@ -103,7 +97,7 @@ router.get('/requests', async (req: AuthenticatedRequest, res: Response): Promis
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Get friend requests error:', error)
+    logger.error('Get friend requests error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch friend requests' },
@@ -190,13 +184,7 @@ router.post('/request', async (req: AuthenticatedRequest, res: Response): Promis
     }
 
     // Check if friendship already exists
-    const { data: existing } = await supabase
-      .from('friendships')
-      .select('*')
-      .or(
-        `and(requester_id.eq.${userId},addressee_id.eq.${addressee_id}),and(requester_id.eq.${addressee_id},addressee_id.eq.${userId})`
-      )
-      .single()
+    const existing = await getFriendship(userId, addressee_id)
 
     if (existing) {
       res.status(400).json({
@@ -224,7 +212,7 @@ router.post('/request', async (req: AuthenticatedRequest, res: Response): Promis
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Send friend request error:', error)
+    logger.error('Send friend request error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to send friend request' },
@@ -262,7 +250,7 @@ router.post('/:id/accept', async (req: AuthenticatedRequest, res: Response): Pro
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Accept friend request error:', error)
+    logger.error('Accept friend request error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to accept friend request' },
@@ -296,7 +284,7 @@ router.post('/:id/decline', async (req: AuthenticatedRequest, res: Response): Pr
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Decline friend request error:', error)
+    logger.error('Decline friend request error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to decline friend request' },
@@ -314,13 +302,13 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response): Promise<
       .from('friendships')
       .delete()
       .eq('id', id)
-      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
+      .or(userFriendshipsOrClause(userId))
 
     if (error) throw error
 
     res.json({ success: true })
   } catch (error) {
-    console.error('Remove friend error:', error)
+    logger.error('Remove friend error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to remove friend' },

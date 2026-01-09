@@ -1,28 +1,12 @@
 import { Router, Response } from 'express'
 import { supabase } from '../services/supabase.js'
 import { authMiddleware } from '../middleware/auth.js'
-import { AuthenticatedRequest } from '../types/index.js'
+import { AuthenticatedRequest, RecurringIOUUpdate, RecurringFrequency } from '../types/index.js'
+import logger from '../utils/logger.js'
+import { getAcceptedFriendship } from '../utils/friendships.js'
+import { validateAmount } from '../utils/constants.js'
 
 const router = Router()
-
-// Amount validation helper
-const MAX_AMOUNT = 999999.99
-function validateAmount(amount: any): { valid: boolean; error?: string } {
-  if (amount === undefined || amount === null || amount === '') {
-    return { valid: true } // Optional field
-  }
-  const num = Number(amount)
-  if (!Number.isFinite(num)) {
-    return { valid: false, error: 'Amount must be a valid number' }
-  }
-  if (num < 0) {
-    return { valid: false, error: 'Amount cannot be negative' }
-  }
-  if (num > MAX_AMOUNT) {
-    return { valid: false, error: `Amount cannot exceed ${MAX_AMOUNT}` }
-  }
-  return { valid: true }
-}
 
 // All routes require authentication
 router.use(authMiddleware)
@@ -76,7 +60,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Get recurring IOUs error:', error)
+    logger.error('Get recurring IOUs error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch recurring IOUs' },
@@ -132,14 +116,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
 
   try {
     // Verify friendship exists
-    const { data: friendship } = await supabase
-      .from('friendships')
-      .select('*')
-      .or(
-        `and(requester_id.eq.${userId},addressee_id.eq.${otherPartyId}),and(requester_id.eq.${otherPartyId},addressee_id.eq.${userId})`
-      )
-      .eq('status', 'accepted')
-      .single()
+    const friendship = await getAcceptedFriendship(userId, otherPartyId)
 
     if (!friendship) {
       res.status(400).json({
@@ -179,7 +156,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Create recurring IOU error:', error)
+    logger.error('Create recurring IOU error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to create recurring IOU' },
@@ -210,7 +187,7 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
       return
     }
 
-    const updates: Record<string, any> = { updated_at: new Date().toISOString() }
+    const updates: RecurringIOUUpdate = { updated_at: new Date().toISOString() }
 
     if (description !== undefined) updates.description = description
     if (amount !== undefined) updates.amount = amount || null
@@ -255,7 +232,7 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Update recurring IOU error:', error)
+    logger.error('Update recurring IOU error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to update recurring IOU' },
@@ -279,7 +256,7 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response): Promise<
 
     res.json({ success: true })
   } catch (error) {
-    console.error('Delete recurring IOU error:', error)
+    logger.error('Delete recurring IOU error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to delete recurring IOU' },
@@ -324,7 +301,7 @@ router.post('/generate', async (req: AuthenticatedRequest, res: Response): Promi
         .single()
 
       if (createError) {
-        console.error('Error creating IOU from recurring:', createError)
+        logger.error('Error creating IOU from recurring', createError)
         continue
       }
 
@@ -355,7 +332,7 @@ router.post('/generate', async (req: AuthenticatedRequest, res: Response): Promi
       }
     })
   } catch (error) {
-    console.error('Generate recurring IOUs error:', error)
+    logger.error('Generate recurring IOUs error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to generate recurring IOUs' },

@@ -2,6 +2,8 @@ import { Router, Response } from 'express'
 import { supabase } from '../services/supabase.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { AuthenticatedRequest } from '../types/index.js'
+import logger from '../utils/logger.js'
+import { DEFAULT_SEARCH_LIMIT } from '../utils/constants.js'
 
 const router = Router()
 
@@ -45,7 +47,7 @@ router.get('/search', async (req: AuthenticatedRequest, res: Response): Promise<
       .or(`username.ilike.%${q}%,email.ilike.%${q}%,first_name.ilike.%${q}%`)
       .eq('hide_from_search', false)
       .neq('id', userId)
-      .limit(20)
+      .limit(DEFAULT_SEARCH_LIMIT)
 
     // Exclude blocked users if any
     if (blockedIds.length > 0) {
@@ -58,7 +60,7 @@ router.get('/search', async (req: AuthenticatedRequest, res: Response): Promise<
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Search users error:', error)
+    logger.error('Search users error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to search users' },

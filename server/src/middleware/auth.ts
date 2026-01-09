@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express'
 import admin from 'firebase-admin'
 import { AuthenticatedRequest } from '../types/index.js'
 import { supabase } from '../services/supabase.js'
+import logger from '../utils/logger.js'
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
@@ -69,7 +70,7 @@ export async function authMiddleware(
 
     next()
   } catch (error) {
-    console.error('Auth error:', error)
+    logger.error('Auth error', error)
     res.status(401).json({
       success: false,
       error: { code: 'UNAUTHORIZED', message: 'Invalid token' },

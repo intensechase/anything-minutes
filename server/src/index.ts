@@ -3,6 +3,14 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
+import logger from './utils/logger.js'
+import {
+  RATE_LIMIT_WINDOW_MS,
+  RATE_LIMIT_GENERAL_MAX,
+  RATE_LIMIT_AUTH_MAX,
+  RATE_LIMIT_SEARCH_WINDOW_MS,
+  RATE_LIMIT_SEARCH_MAX
+} from './utils/constants.js'
 import authRoutes from './routes/auth.js'
 import friendsRoutes from './routes/friends.js'
 import usersRoutes from './routes/users.js'
@@ -46,20 +54,20 @@ app.use(express.json({ limit: '1mb' }))
 
 // Rate limiting
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_GENERAL_MAX,
   message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later' } }
 })
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 requests per window
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_AUTH_MAX,
   message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many auth attempts, please try again later' } }
 })
 
 const searchLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 30, // 30 searches per minute
+  windowMs: RATE_LIMIT_SEARCH_WINDOW_MS,
+  max: RATE_LIMIT_SEARCH_MAX,
   message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many searches, please slow down' } }
 })
 
@@ -86,5 +94,5 @@ app.get('/api/health', (_req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+  logger.info(`Server running on port ${PORT}`)
 })

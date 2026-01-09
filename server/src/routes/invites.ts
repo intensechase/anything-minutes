@@ -3,18 +3,23 @@ import crypto from 'crypto'
 import rateLimit from 'express-rate-limit'
 import { supabase } from '../services/supabase.js'
 import { authMiddleware } from '../middleware/auth.js'
-import { AuthenticatedRequest } from '../types/index.js'
+import { AuthenticatedRequest, IOUInsert, IOUUpdate } from '../types/index.js'
+import logger from '../utils/logger.js'
+import { friendshipOrClause } from '../utils/friendships.js'
+import {
+  MAX_PENDING_INVITES,
+  INVITE_EXPIRY_DAYS,
+  RATE_LIMIT_WINDOW_MS,
+  RATE_LIMIT_INVITE_MAX,
+  validateAmount
+} from '../utils/constants.js'
 
 const router = Router()
 
-const MAX_PENDING_INVITES = 5
-const INVITE_EXPIRY_DAYS = 7
-const MAX_AMOUNT = 999999.99
-
 // Stricter rate limiting for public invite endpoints (prevent brute force)
 const inviteTokenLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // 20 requests per 15 minutes per IP
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_INVITE_MAX,
   message: {
     success: false,
     error: { code: 'RATE_LIMITED', message: 'Too many requests. Please try again later.' }
@@ -22,24 +27,6 @@ const inviteTokenLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 })
-
-// Amount validation helper
-function validateAmount(amount: any): { valid: boolean; error?: string } {
-  if (amount === undefined || amount === null || amount === '') {
-    return { valid: true } // Optional field
-  }
-  const num = Number(amount)
-  if (!Number.isFinite(num)) {
-    return { valid: false, error: 'Amount must be a valid number' }
-  }
-  if (num < 0) {
-    return { valid: false, error: 'Amount cannot be negative' }
-  }
-  if (num > MAX_AMOUNT) {
-    return { valid: false, error: `Amount cannot exceed ${MAX_AMOUNT}` }
-  }
-  return { valid: true }
-}
 
 // Generate a secure random token
 function generateToken(): string {
@@ -110,7 +97,7 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
     // Create the IOU first (with placeholder for the other party)
     // For 'iou': current user is debtor, invitee will be creditor
     // For 'uome': current user is creditor, invitee will be debtor
-    const iouData: Record<string, any> = {
+    const iouData: IOUInsert = {
       description,
       amount: amount || null,
       currency: currency || null,
@@ -119,14 +106,8 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
       notes: notes || null,
       status: 'invite_pending', // Special status for invite IOUs
       created_by: userId,
-    }
-
-    if (type === 'iou') {
-      iouData.debtor_id = userId
-      iouData.creditor_id = null // Will be filled when invite is accepted
-    } else {
-      iouData.creditor_id = userId
-      iouData.debtor_id = null // Will be filled when invite is accepted
+      debtor_id: type === 'iou' ? userId : null,
+      creditor_id: type === 'uome' ? userId : null,
     }
 
     const { data: iou, error: iouError } = await supabase
@@ -172,7 +153,7 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
       }
     })
   } catch (error) {
-    console.error('Create invite error:', error)
+    logger.error('Create invite error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to create invite' },
@@ -199,7 +180,7 @@ router.get('/pending', authMiddleware, async (req: AuthenticatedRequest, res: Re
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Get pending invites error:', error)
+    logger.error('Get pending invites error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch pending invites' },
@@ -208,15 +189,23 @@ router.get('/pending', authMiddleware, async (req: AuthenticatedRequest, res: Re
 })
 
 // Get invite by token (PUBLIC - no auth required, rate limited)
+// Returns limited data to prevent scraping sensitive information
 router.get('/:token', inviteTokenLimiter, async (req: Request, res: Response): Promise<void> => {
   const { token } = req.params
 
   try {
+    // Only select fields needed for the public invite page
+    // Excludes: invitee_email, invitee_phone, IOU notes, internal IDs
     const { data: invite, error } = await supabase
       .from('iou_invites')
       .select(`
-        *,
-        iou:ious(*),
+        id,
+        status,
+        expires_at,
+        invitee_name,
+        iou_id,
+        invited_by,
+        iou:ious(id, description, amount, currency, visibility, due_date, debtor_id, creditor_id),
         inviter:users!iou_invites_invited_by_fkey(id, username, first_name, profile_pic_url)
       `)
       .eq('token', token)
@@ -282,7 +271,7 @@ router.get('/:token', inviteTokenLimiter, async (req: Request, res: Response): P
 
     res.json({ success: true, data: invite })
   } catch (error) {
-    console.error('Get invite error:', error)
+    logger.error('Get invite error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch invite' },
@@ -331,16 +320,12 @@ router.post('/:token/accept', authMiddleware, async (req: AuthenticatedRequest, 
     }
 
     // Update the IOU with the accepting user's ID
-    const iouUpdate: Record<string, any> = {
-      status: 'pending', // Now it's a regular pending IOU awaiting acceptance
-    }
-
     // If the inviter created an IOU (they owe), the accepter is the creditor
     // If the inviter created a UOMe (they're owed), the accepter is the debtor
-    if (invite.iou.debtor_id === invite.invited_by) {
-      iouUpdate.creditor_id = userId
-    } else {
-      iouUpdate.debtor_id = userId
+    const iouUpdate: IOUUpdate = {
+      status: 'pending', // Now it's a regular pending IOU awaiting acceptance
+      creditor_id: invite.iou.debtor_id === invite.invited_by ? userId : undefined,
+      debtor_id: invite.iou.debtor_id !== invite.invited_by ? userId : undefined,
     }
 
     const { error: iouUpdateError } = await supabase
@@ -366,7 +351,7 @@ router.post('/:token/accept', authMiddleware, async (req: AuthenticatedRequest, 
     const { data: existingFriendship } = await supabase
       .from('friendships')
       .select('id')
-      .or(`and(requester_id.eq.${userId},addressee_id.eq.${invite.invited_by}),and(requester_id.eq.${invite.invited_by},addressee_id.eq.${userId})`)
+      .or(friendshipOrClause(userId, invite.invited_by))
       .single()
 
     if (!existingFriendship) {
@@ -405,7 +390,7 @@ router.post('/:token/accept', authMiddleware, async (req: AuthenticatedRequest, 
 
     res.json({ success: true, data: updatedIOU })
   } catch (error) {
-    console.error('Accept invite error:', error)
+    logger.error('Accept invite error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to accept invite' },
@@ -464,7 +449,7 @@ router.post('/:token/decline', inviteTokenLimiter, async (req: Request, res: Res
 
     res.json({ success: true, message: 'Invite declined' })
   } catch (error) {
-    console.error('Decline invite error:', error)
+    logger.error('Decline invite error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to decline invite' },

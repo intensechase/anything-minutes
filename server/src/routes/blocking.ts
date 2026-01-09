@@ -2,6 +2,8 @@ import { Router, Response } from 'express'
 import { supabase } from '../services/supabase.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { AuthenticatedRequest } from '../types/index.js'
+import logger from '../utils/logger.js'
+import { friendshipOrClause } from '../utils/friendships.js'
 
 const router = Router()
 
@@ -28,7 +30,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Get blocked users error:', error)
+    logger.error('Get blocked users error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch blocked users' },
@@ -95,13 +97,11 @@ router.post('/:id', async (req: AuthenticatedRequest, res: Response): Promise<vo
     await supabase
       .from('friendships')
       .delete()
-      .or(
-        `and(requester_id.eq.${userId},addressee_id.eq.${blockedId}),and(requester_id.eq.${blockedId},addressee_id.eq.${userId})`
-      )
+      .or(friendshipOrClause(userId, blockedId))
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Block user error:', error)
+    logger.error('Block user error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to block user' },
@@ -125,7 +125,7 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response): Promise<
 
     res.json({ success: true })
   } catch (error) {
-    console.error('Unblock user error:', error)
+    logger.error('Unblock user error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to unblock user' },
@@ -148,7 +148,7 @@ router.get('/check/:id', async (req: AuthenticatedRequest, res: Response): Promi
 
     res.json({ success: true, data: { isBlocked: !!data } })
   } catch (error) {
-    console.error('Check blocked status error:', error)
+    logger.error('Check blocked status error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to check blocked status' },

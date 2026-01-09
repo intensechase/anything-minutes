@@ -2,6 +2,8 @@ import { Router, Response } from 'express'
 import { supabase } from '../services/supabase.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { AuthenticatedRequest, StreetCred } from '../types/index.js'
+import logger from '../utils/logger.js'
+import { areFriends } from '../utils/friendships.js'
 
 const router = Router()
 
@@ -108,7 +110,7 @@ router.get('/check-username/:username', async (req: AuthenticatedRequest, res: R
       data: { available: true }
     })
   } catch (error) {
-    console.error('Check username error:', error)
+    logger.error('Check username error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to check username' }
@@ -186,7 +188,7 @@ router.post('/complete', async (req: AuthenticatedRequest, res: Response): Promi
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Complete profile error:', error)
+    logger.error('Complete profile error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to complete profile' }
@@ -216,7 +218,7 @@ router.get('/me', async (req: AuthenticatedRequest, res: Response): Promise<void
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Get profile error:', error)
+    logger.error('Get profile error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch profile' },
@@ -248,16 +250,9 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
     // Check profile visibility if viewing someone else's profile
     if (id !== userId && data.profile_visibility === 'friends_only') {
       // Check if they are friends
-      const { data: friendship } = await supabase
-        .from('friendships')
-        .select('id')
-        .or(
-          `and(requester_id.eq.${userId},addressee_id.eq.${id}),and(requester_id.eq.${id},addressee_id.eq.${userId})`
-        )
-        .eq('status', 'accepted')
-        .single()
+      const isFriends = await areFriends(userId, id)
 
-      if (!friendship) {
+      if (!isFriends) {
         // Return limited profile info for non-friends
         res.json({
           success: true,
@@ -276,7 +271,7 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response): Promise<voi
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Get user profile error:', error)
+    logger.error('Get user profile error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch user profile' },
@@ -511,7 +506,7 @@ router.put('/settings', async (req: AuthenticatedRequest, res: Response): Promis
 
     res.json({ success: true, data })
   } catch (error) {
-    console.error('Update profile error:', error)
+    logger.error('Update profile error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to update profile' },
@@ -552,16 +547,9 @@ router.get('/:id/street-cred', async (req: AuthenticatedRequest, res: Response):
 
       if (targetUser.street_cred_visibility === 'friends_only') {
         // Check if they are friends
-        const { data: friendship } = await supabase
-          .from('friendships')
-          .select('*')
-          .or(
-            `and(requester_id.eq.${userId},addressee_id.eq.${id}),and(requester_id.eq.${id},addressee_id.eq.${userId})`
-          )
-          .eq('status', 'accepted')
-          .single()
+        const isFriends = await areFriends(userId, id)
 
-        if (!friendship) {
+        if (!isFriends) {
           res.json({
             success: true,
             data: null,
@@ -588,7 +576,7 @@ router.get('/:id/street-cred', async (req: AuthenticatedRequest, res: Response):
 
     res.json({ success: true, data: streetCred })
   } catch (error) {
-    console.error('Get street cred error:', error)
+    logger.error('Get street cred error', error)
     res.status(500).json({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Failed to fetch street cred' },

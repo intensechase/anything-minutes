@@ -45,20 +45,94 @@ export interface Friendship {
   addressee?: User
 }
 
+export type IOUStatus = 'pending' | 'active' | 'payment_pending' | 'paid' | 'cancelled' | 'invite_pending' | 'expired'
+export type IOUVisibility = 'private' | 'public'
+
 export interface IOU {
+  id: string
+  debtor_id: string | null
+  creditor_id: string | null
+  created_by: string  // Who created the IOU (for accept/decline permissions)
+  description: string
+  amount?: number | null
+  currency?: string | null
+  status: IOUStatus
+  visibility: IOUVisibility
+  due_date?: string | null
+  notes?: string | null
+  created_at: string
+  paid_at?: string | null
+  debtor?: User
+  creditor?: User
+}
+
+export interface IOUInsert {
+  debtor_id?: string | null
+  creditor_id?: string | null
+  created_by: string
+  description: string
+  amount?: number | null
+  currency?: string | null
+  status: IOUStatus
+  visibility?: IOUVisibility
+  due_date?: string | null
+  notes?: string | null
+}
+
+export interface IOUUpdate {
+  debtor_id?: string | null
+  creditor_id?: string | null
+  status?: IOUStatus
+  visibility?: IOUVisibility
+  due_date?: string | null
+  notes?: string | null
+  paid_at?: string | null
+}
+
+export interface Payment {
+  id: string
+  iou_id: string
+  amount?: number | null
+  description: string
+  created_by: string
+  created_at: string
+}
+
+export type RecurringFrequency = 'weekly' | 'monthly'
+
+export interface RecurringIOU {
   id: string
   debtor_id: string
   creditor_id: string
-  created_by: string  // Who created the IOU (for accept/decline permissions)
+  created_by: string
   description: string
-  status: 'pending' | 'active' | 'payment_pending' | 'paid' | 'cancelled'
-  visibility: 'private' | 'public'
-  due_date?: string
-  notes?: string
+  amount?: number | null
+  currency?: string | null
+  visibility: IOUVisibility
+  notes?: string | null
+  frequency: RecurringFrequency
+  day_of_week?: number | null
+  day_of_month?: number | null
+  next_due_at: string
+  last_generated_at?: string | null
+  is_active: boolean
   created_at: string
-  paid_at?: string
-  debtor?: User
-  creditor?: User
+  updated_at: string
+}
+
+export interface RecurringIOUUpdate {
+  description?: string
+  amount?: number | null
+  currency?: string | null
+  visibility?: IOUVisibility
+  notes?: string | null
+  frequency?: RecurringFrequency
+  day_of_week?: number | null
+  day_of_month?: number | null
+  next_due_at?: string
+  last_generated_at?: string | null
+  is_active?: boolean
+  updated_at?: string
 }
 
 export interface StreetCred {
