@@ -230,11 +230,11 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                   </span>
                   <input
                     type="number"
-                    step="0.01"
+                    step={currency === '$' ? '0.01' : '1'}
                     min="0"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
+                    placeholder={currency === '$' ? '0.00' : '0'}
                     className="w-full pl-10 pr-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/40"
                   />
                 </div>

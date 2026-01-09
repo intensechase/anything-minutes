@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LogOut, Settings, Award, Receipt, UserPlus, UserMinus, Clock, Check, X, FileText, Sun, Moon, Edit, Shield, ChevronRight } from 'lucide-react'
+import { LogOut, Settings, Award, Receipt, UserPlus, UserMinus, Clock, Check, X, FileText, Sun, Moon, Edit, Shield, ChevronRight, Eye, EyeOff } from 'lucide-react'
 import { api } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -20,6 +20,7 @@ export default function ProfilePage() {
   const [showCreateIOU, setShowCreateIOU] = useState(false)
   const [showEditProfile, setShowEditProfile] = useState(false)
   const [showBlockedUsers, setShowBlockedUsers] = useState(false)
+  const [showEmail, setShowEmail] = useState(false)
 
   const isOwnProfile = !userId || userId === user?.id
 
@@ -152,6 +153,14 @@ export default function ProfilePage() {
       : 100
     : 0
 
+  // Mask email: show first char, asterisks, then domain
+  const maskEmail = (email: string) => {
+    const [localPart, domain] = email.split('@')
+    if (!domain) return email
+    const maskedLocal = localPart[0] + '*'.repeat(Math.min(localPart.length - 1, 4))
+    return `${maskedLocal}@${domain}`
+  }
+
   return (
     <div className="space-y-6">
       {/* Profile Header */}
@@ -167,7 +176,17 @@ export default function ProfilePage() {
               </h1>
               <p className="text-light/50 text-sm">@{profile?.username}</p>
               {isOwnProfile && profile?.email && (
-                <p className="text-light/40 text-xs mt-1">{profile.email}</p>
+                <button
+                  onClick={() => setShowEmail(!showEmail)}
+                  className="flex items-center gap-1 text-light/40 text-xs mt-1 hover:text-light/60 transition-colors"
+                >
+                  {showEmail ? profile.email : maskEmail(profile.email)}
+                  {showEmail ? (
+                    <EyeOff className="w-3 h-3" />
+                  ) : (
+                    <Eye className="w-3 h-3" />
+                  )}
+                </button>
               )}
               {isOwnProfile && profile?.phone && (
                 <p className="text-light/40 text-xs mt-1">{profile.phone}</p>
@@ -181,6 +200,9 @@ export default function ProfilePage() {
                     })
                   : '...'}
               </p>
+              {isOwnProfile && profile?.venmo_handle && (
+                <p className="text-accent text-xs mt-1">@{profile.venmo_handle}</p>
+              )}
             </div>
           </div>
           {isOwnProfile ? (
@@ -289,6 +311,68 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Street Cred */}
+      <div className="bg-card rounded-xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-accent/10 rounded-lg">
+            <Award className="w-6 h-6 text-accent" />
+          </div>
+          <h2 className="text-lg font-semibold text-light">Street Cred</h2>
+        </div>
+
+        {streetCred ? (
+          <div className="space-y-4">
+            {/* Score Display */}
+            <div className="flex items-end gap-2">
+              <span className="text-4xl font-bold text-accent">
+                {streetCred.debts_paid}
+              </span>
+              <span className="text-2xl text-light/40">/</span>
+              <span className="text-2xl text-light/60">
+                {streetCred.total_debts}
+              </span>
+              <span className="text-light/50 mb-1">debts paid</span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="relative h-4 bg-dark rounded-full overflow-hidden">
+              <div
+                className="absolute left-0 top-0 h-full bg-gradient-to-r from-accent to-success rounded-full transition-all duration-500"
+                style={{ width: `${credPercentage}%` }}
+              />
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4 pt-2">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-success">
+                  {streetCred.debts_paid}
+                </p>
+                <p className="text-xs text-light/50">Paid</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-warning">
+                  {streetCred.outstanding_debts}
+                </p>
+                <p className="text-xs text-light/50">Outstanding</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-accent">
+                  {credPercentage}%
+                </p>
+                <p className="text-xs text-light/50">Rate</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-4 text-light/50">
+            {isOwnProfile
+              ? 'Complete IOUs to build your street cred!'
+              : 'Street cred is private'}
+          </div>
+        )}
       </div>
 
       {/* Settings Panel */}
@@ -516,68 +600,6 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
-      {/* Street Cred */}
-      <div className="bg-card rounded-xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-accent/10 rounded-lg">
-            <Award className="w-6 h-6 text-accent" />
-          </div>
-          <h2 className="text-lg font-semibold text-light">Street Cred</h2>
-        </div>
-
-        {streetCred ? (
-          <div className="space-y-4">
-            {/* Score Display */}
-            <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold text-accent">
-                {streetCred.debts_paid}
-              </span>
-              <span className="text-2xl text-light/40">/</span>
-              <span className="text-2xl text-light/60">
-                {streetCred.total_debts}
-              </span>
-              <span className="text-light/50 mb-1">debts paid</span>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="relative h-4 bg-dark rounded-full overflow-hidden">
-              <div
-                className="absolute left-0 top-0 h-full bg-gradient-to-r from-accent to-success rounded-full transition-all duration-500"
-                style={{ width: `${credPercentage}%` }}
-              />
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 pt-2">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-success">
-                  {streetCred.debts_paid}
-                </p>
-                <p className="text-xs text-light/50">Paid</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-warning">
-                  {streetCred.outstanding_debts}
-                </p>
-                <p className="text-xs text-light/50">Outstanding</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-accent">
-                  {credPercentage}%
-                </p>
-                <p className="text-xs text-light/50">Rate</p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-4 text-light/50">
-            {isOwnProfile
-              ? 'Complete IOUs to build your street cred!'
-              : 'Street cred is private'}
-          </div>
-        )}
-      </div>
 
       {/* IOUs with this friend */}
       {!isOwnProfile && friendshipStatus === 'friends' && (
