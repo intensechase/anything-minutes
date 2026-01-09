@@ -267,7 +267,7 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                       value={inviteeName}
                       onChange={(e) => setInviteeName(e.target.value)}
                       placeholder="e.g., Dave from work"
-                      className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/60"
+                      className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/80"
                     />
                   </div>
                   <div>
@@ -279,7 +279,7 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                       value={inviteeContact}
                       onChange={(e) => setInviteeContact(e.target.value)}
                       placeholder="For your reference only"
-                      className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/60"
+                      className="w-full px-4 py-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/80"
                     />
                     <p className="text-xs text-light/40 mt-1">
                       We won't send anything - you'll share the link yourself
