@@ -113,6 +113,7 @@ export const api = {
     due_date?: string
     notes?: string
     amount?: number
+    currency?: string
   }): Promise<ApiResponse<IOU>> {
     const { data } = await apiClient.post('/ious', iou)
     return data
@@ -126,6 +127,7 @@ export const api = {
     due_date?: string
     notes?: string
     amount?: number
+    currency?: string
   }): Promise<ApiResponse<IOU>> {
     const { data } = await apiClient.post('/ious/uome', uome)
     return data
@@ -187,6 +189,7 @@ export const api = {
     creditor_id?: string  // For IOU: friend is creditor (I owe them)
     description: string
     amount?: number
+    currency?: string
     visibility?: 'private' | 'public'
     notes?: string
     frequency: 'weekly' | 'monthly'

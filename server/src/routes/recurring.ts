@@ -70,7 +70,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
 // - If creditor_id provided: IOU (I owe them) - current user is debtor
 router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
-  const { debtor_id, creditor_id, description, amount, visibility, notes, frequency, day_of_week, day_of_month } = req.body
+  const { debtor_id, creditor_id, description, amount, currency, visibility, notes, frequency, day_of_week, day_of_month } = req.body
 
   if ((!debtor_id && !creditor_id) || !description || !frequency) {
     res.status(400).json({
@@ -130,6 +130,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
         created_by: userId,
         description,
         amount: amount || null,
+        currency: currency || null,
         visibility: visibility || 'private',
         notes: notes || null,
         frequency,
@@ -284,6 +285,7 @@ router.post('/generate', async (req: AuthenticatedRequest, res: Response): Promi
           creditor_id: recurring.creditor_id,
           description: recurring.description,
           amount: recurring.amount,
+          currency: recurring.currency,
           visibility: recurring.visibility,
           notes: recurring.notes ? `[Recurring] ${recurring.notes}` : '[Recurring IOU]',
           status: 'pending',

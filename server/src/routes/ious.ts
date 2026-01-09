@@ -56,7 +56,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response): Promise<void> 
 // Create IOU (debtor creates - "I owe you")
 router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
-  const { creditor_id, description, visibility, due_date, notes, amount } = req.body
+  const { creditor_id, description, visibility, due_date, notes, amount, currency } = req.body
 
   if (!creditor_id || !description) {
     res.status(400).json({
@@ -92,6 +92,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
         creditor_id,
         description,
         amount: amount || null,
+        currency: currency || null,
         visibility: visibility || 'private',
         due_date: due_date || null,
         notes: notes || null,
@@ -120,7 +121,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response): Promise<void>
 // Create UOMe (creditor creates - "You owe me")
 router.post('/uome', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const userId = req.user!.userId
-  const { debtor_id, description, visibility, due_date, notes, amount } = req.body
+  const { debtor_id, description, visibility, due_date, notes, amount, currency } = req.body
 
   if (!debtor_id || !description) {
     res.status(400).json({
@@ -156,6 +157,7 @@ router.post('/uome', async (req: AuthenticatedRequest, res: Response): Promise<v
         creditor_id: userId,  // Current user is the creditor
         description,
         amount: amount || null,
+        currency: currency || null,
         visibility: visibility || 'private',
         due_date: due_date || null,
         notes: notes || null,

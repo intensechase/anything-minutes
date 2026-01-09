@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { X, Search, Calendar, DollarSign } from 'lucide-react'
+import { X, Search, Calendar, Plus } from 'lucide-react'
 import { api } from '../services/api'
 import { User } from '../types'
+
+const CURRENCY_OPTIONS = ['$', '🍺', '☕', '🍌', '🥤'] as const
+type CurrencyOption = typeof CURRENCY_OPTIONS[number] | 'custom'
 
 interface CreateUOMeModalProps {
   onClose: () => void
@@ -17,6 +20,8 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
   const [selectedFriend, setSelectedFriend] = useState<User | null>(preselectedFriend || null)
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
+  const [currency, setCurrency] = useState<CurrencyOption>('$')
+  const [customCurrency, setCustomCurrency] = useState('')
   const [notes, setNotes] = useState('')
   const [visibility, setVisibility] = useState<'private' | 'public'>('private')
   const [dueDate, setDueDate] = useState('')
@@ -38,15 +43,18 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
   )
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      api.createUOMe({
+    mutationFn: () => {
+      const selectedCurrency = currency === 'custom' ? customCurrency : currency
+      return api.createUOMe({
         debtor_id: selectedFriend!.id,  // Friend is the debtor (they owe you)
         description,
         visibility,
         due_date: dueDate || undefined,
         notes: notes || undefined,
         amount: amount ? parseFloat(amount) : undefined,
-      }),
+        currency: amount && selectedCurrency ? selectedCurrency : undefined,
+      })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ious'] })
       onClose()
@@ -174,13 +182,52 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                 />
               </div>
 
-              {/* Amount */}
+              {/* Amount with Currency */}
               <div>
                 <label className="block text-sm font-medium text-light mb-1">
                   Amount (optional)
                 </label>
+                <div className="flex gap-2 mb-2">
+                  {CURRENCY_OPTIONS.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setCurrency(opt)}
+                      className={`w-10 h-10 rounded-lg border text-lg flex items-center justify-center transition-colors ${
+                        currency === opt
+                          ? 'bg-accent/20 border-accent text-light'
+                          : 'bg-dark border-light/20 text-light/60 hover:border-light/40'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setCurrency('custom')}
+                    className={`w-10 h-10 rounded-lg border flex items-center justify-center transition-colors ${
+                      currency === 'custom'
+                        ? 'bg-accent/20 border-accent text-light'
+                        : 'bg-dark border-light/20 text-light/60 hover:border-light/40'
+                    }`}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                {currency === 'custom' && (
+                  <input
+                    type="text"
+                    value={customCurrency}
+                    onChange={(e) => setCustomCurrency(e.target.value)}
+                    placeholder="Enter custom (e.g., 🍕, minutes, etc.)"
+                    maxLength={20}
+                    className="w-full px-4 py-2 mb-2 bg-dark border border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50 text-light placeholder-light/40"
+                  />
+                )}
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-light/40" />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-light/40">
+                    {currency === 'custom' ? (customCurrency || '?') : currency}
+                  </span>
                   <input
                     type="number"
                     step="0.01"
@@ -192,7 +239,7 @@ export default function CreateUOMeModal({ onClose, preselectedFriend }: CreateUO
                   />
                 </div>
                 <p className="text-xs text-light/40 mt-1">
-                  For monetary IOUs - enables partial payment tracking
+                  For tracking quantity - enables partial payment tracking
                 </p>
               </div>
 
